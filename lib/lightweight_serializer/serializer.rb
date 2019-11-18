@@ -22,12 +22,16 @@ module LightweightSerializer
 
         self.class.defined_nested_serializers.each do |attr_name, serializer_class|
           nested_object = object.public_send(attr_name)
-          result[attr_name] = serializer_class.new(nested_object).as_json
+          result[attr_name] = if nested_object.nil?
+                                nil
+                              else
+                                serializer_class.new(nested_object).as_json
+                              end
         end
 
         self.class.defined_collection_serializers.each do |attr_name, serializer_class|
           nested_collection = object.public_send(attr_name)
-          result[attr_name] = nested_collection.map do |collection_item|
+          result[attr_name] = Array(nested_collection).map do |collection_item|
             serializer_class.new(collection_item).as_json
           end
         end
