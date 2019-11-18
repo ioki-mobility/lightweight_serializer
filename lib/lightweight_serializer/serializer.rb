@@ -2,7 +2,7 @@
 
 module LightweightSerializer
   class Serializer
-    attr_reader :object
+    attr_reader :object, :options
 
     def self.inherited(base)
       base.defined_attributes = defined_attributes.deep_dup || {}
@@ -35,12 +35,14 @@ module LightweightSerializer
       end
 
       attr_reader :defined_attributes, :defined_collection_serializers, :defined_nested_serializers, :skip_root_node
+
       protected
       attr_writer :defined_attributes, :defined_collection_serializers, :defined_nested_serializers
     end
 
-    def initialize(object)
+    def initialize(object, **options)
       @object = object
+      @options = options
     end
 
     def as_json
@@ -55,7 +57,7 @@ module LightweightSerializer
         result[attr_name] = if nested_object.nil?
                               nil
                             else
-                              attribute_config.serializer.new(nested_object).as_json
+                              attribute_config.serializer.new(nested_object, skip_root: true).as_json
                             end
       end
 
@@ -63,11 +65,11 @@ module LightweightSerializer
         nested_collection = block_or_attribute_from_object(attribute_config)
 
         result[attr_name] = Array(nested_collection).map do |collection_item|
-          attribute_config.serializer.new(collection_item).as_json
+          attribute_config.serializer.new(collection_item, skip_root: true).as_json
         end
       end
 
-      if self.class.skip_root_node
+      if self.class.skip_root_node || options[:skip_root]
         result
       else
         { data: result }
