@@ -4,6 +4,13 @@ module LightweightSerializer
   class Serializer
     attr_reader :object
 
+    def self.inherited(base)
+      base.defined_attributes = defined_attributes.deep_dup || {}
+      base.defined_collection_serializers = defined_collection_serializers.deep_dup || {}
+      base.defined_nested_serializers = defined_nested_serializers.deep_dup || {}
+      super
+    end
+
     class<<self
       def attribute(name, &blk)
         defined_attributes[name.to_sym] = Attribute.new(attr_name: name, block: blk)
@@ -27,19 +34,9 @@ module LightweightSerializer
         @skip_root_node = true
       end
 
-      def defined_attributes
-        @defined_attributes ||= {}
-      end
-
-      def defined_collection_serializers
-        @defined_collection_serializers ||= {}
-      end
-
-      def defined_nested_serializers
-        @defined_nested_serializers ||= {}
-      end
-
-      attr_reader :skip_root_node
+      attr_reader :defined_attributes, :defined_collection_serializers, :defined_nested_serializers, :skip_root_node
+      protected
+      attr_writer :defined_attributes, :defined_collection_serializers, :defined_nested_serializers
     end
 
     def initialize(object)
@@ -47,38 +44,38 @@ module LightweightSerializer
     end
 
     def as_json
-      {}.tap do |result|
-        self.class.defined_attributes.each do |attr_name, attribute_config|
-          result[attr_name] = block_or_attribute_from_object(attribute_config)
-        end
+      result = {}
 
-        self.class.defined_nested_serializers.each do |attr_name, attribute_config|
-          nested_object = block_or_attribute_from_object(attribute_config)
-          result[attr_name] = if nested_object.nil?
-                                nil
-                              else
-                                attribute_config.serializer.new(nested_object).as_json
-                              end
-        end
+      self.class.defined_attributes.each do |attr_name, attribute_config|
+        result[attr_name] = block_or_attribute_from_object(attribute_config)
+      end
 
-        self.class.defined_collection_serializers.each do |attr_name, attribute_config|
-          nested_collection = block_or_attribute_from_object(attribute_config)
+      self.class.defined_nested_serializers.each do |attr_name, attribute_config|
+        nested_object = block_or_attribute_from_object(attribute_config)
+        result[attr_name] = if nested_object.nil?
+                              nil
+                            else
+                              attribute_config.serializer.new(nested_object).as_json
+                            end
+      end
 
-          result[attr_name] = Array(nested_collection).map do |collection_item|
-            attribute_config.serializer.new(collection_item).as_json
-          end
+      self.class.defined_collection_serializers.each do |attr_name, attribute_config|
+        nested_collection = block_or_attribute_from_object(attribute_config)
+
+        result[attr_name] = Array(nested_collection).map do |collection_item|
+          attribute_config.serializer.new(collection_item).as_json
         end
+      end
+
+      if self.class.skip_root_node
+        result
+      else
+        { data: result }
       end
     end
 
     def to_json(*_args)
-      obj_to_dump = if self.class.skip_root_node
-                      as_json
-                    else
-                      { data: as_json }
-                    end
-
-      Oj.dump(obj_to_dump, mode: :compat)
+      Oj.dump(as_json, mode: :compat)
     end
 
     private
