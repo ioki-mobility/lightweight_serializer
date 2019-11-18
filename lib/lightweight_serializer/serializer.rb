@@ -37,6 +37,7 @@ module LightweightSerializer
       attr_reader :defined_attributes, :defined_collection_serializers, :defined_nested_serializers, :skip_root_node
 
       protected
+
       attr_writer :defined_attributes, :defined_collection_serializers, :defined_nested_serializers
     end
 
