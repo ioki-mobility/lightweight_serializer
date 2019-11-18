@@ -24,6 +24,13 @@ module LightweightSerializer
           nested_object = object.public_send(attr_name)
           result[attr_name] = serializer_class.new(nested_object).as_json
         end
+
+        self.class.defined_collection_serializers.each do |attr_name, serializer_class|
+          nested_collection = object.public_send(attr_name)
+          result[attr_name] = nested_collection.map do |collection_item|
+            serializer_class.new(collection_item).as_json
+          end
+        end
       end
     end
 
