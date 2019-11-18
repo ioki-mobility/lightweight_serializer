@@ -23,7 +23,13 @@ module LightweightSerializer
     end
 
     def to_json(*_args)
-      Oj.dump({ data: as_json }, mode: :compat)
+      obj_to_dump = if self.class.skip_root_node
+                      as_json
+                    else
+                      { data: as_json }
+                    end
+
+      Oj.dump(obj_to_dump, mode: :compat)
     end
 
     class<<self
@@ -37,9 +43,15 @@ module LightweightSerializer
         end
       end
 
+      def no_root!
+        @skip_root_node = true
+      end
+
       def defined_attributes
         @defined_attributes ||= {}
       end
+
+      attr_reader :skip_root_node
     end
   end
 end
