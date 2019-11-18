@@ -85,7 +85,7 @@ module LightweightSerializer
 
     def block_or_attribute_from_object(attribute_config)
       if attribute_config.block
-        attribute_config.block.call(object)
+        instance_exec(object, &attribute_config.block)
       else
         object.public_send(attribute_config.attr_name)
       end
