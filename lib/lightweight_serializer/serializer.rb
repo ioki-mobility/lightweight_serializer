@@ -4,67 +4,23 @@ module LightweightSerializer
   class Serializer
     attr_reader :object
 
-    def initialize(object)
-      @object = object
-    end
-
-    def as_json
-      {}.tap do |result|
-        self.class.defined_attributes.each do |attr_name, block|
-          value = if block.nil?
-                    object.public_send(attr_name)
-                  else
-                    block.call(object)
-                  end
-
-          result[attr_name] = value
-        end
-
-        self.class.defined_nested_serializers.each do |attr_name, serializer_class|
-          nested_object = object.public_send(attr_name)
-          result[attr_name] = if nested_object.nil?
-                                nil
-                              else
-                                serializer_class.new(nested_object).as_json
-                              end
-        end
-
-        self.class.defined_collection_serializers.each do |attr_name, serializer_class|
-          nested_collection = object.public_send(attr_name)
-          result[attr_name] = Array(nested_collection).map do |collection_item|
-            serializer_class.new(collection_item).as_json
-          end
-        end
-      end
-    end
-
-    def to_json(*_args)
-      obj_to_dump = if self.class.skip_root_node
-                      as_json
-                    else
-                      { data: as_json }
-                    end
-
-      Oj.dump(obj_to_dump, mode: :compat)
-    end
-
     class<<self
       def attribute(name, &blk)
-        defined_attributes[name.to_sym] = blk
+        defined_attributes[name.to_sym] = Attribute.new(attr_name: name, block: blk)
       end
 
       def attributes(*names)
         names.each do |name|
-          defined_attributes[name.to_sym] = nil
+          defined_attributes[name.to_sym] = Attribute.new(attr_name: name, block: nil)
         end
       end
 
-      def nested(name, serializer:)
-        defined_nested_serializers[name.to_sym] = serializer
+      def nested(name, serializer:, &blk)
+        defined_nested_serializers[name.to_sym] = NestedResource.new(attr_name: name, block: blk, serializer: serializer)
       end
 
-      def collection(name, serializer:)
-        defined_collection_serializers[name.to_sym] = serializer
+      def collection(name, serializer:, &blk)
+        defined_collection_serializers[name.to_sym] = NestedCollection.new(attr_name: name, block: blk, serializer: serializer)
       end
 
       def no_root!
@@ -85,5 +41,55 @@ module LightweightSerializer
 
       attr_reader :skip_root_node
     end
+
+    def initialize(object)
+      @object = object
+    end
+
+    def as_json
+      {}.tap do |result|
+        self.class.defined_attributes.each do |attr_name, attribute_config|
+          result[attr_name] = block_or_attribute_from_object(attribute_config)
+        end
+
+        self.class.defined_nested_serializers.each do |attr_name, attribute_config|
+          nested_object = block_or_attribute_from_object(attribute_config)
+          result[attr_name] = if nested_object.nil?
+                                nil
+                              else
+                                attribute_config.serializer.new(nested_object).as_json
+                              end
+        end
+
+        self.class.defined_collection_serializers.each do |attr_name, attribute_config|
+          nested_collection = block_or_attribute_from_object(attribute_config)
+
+          result[attr_name] = Array(nested_collection).map do |collection_item|
+            attribute_config.serializer.new(collection_item).as_json
+          end
+        end
+      end
+    end
+
+    def to_json(*_args)
+      obj_to_dump = if self.class.skip_root_node
+                      as_json
+                    else
+                      { data: as_json }
+                    end
+
+      Oj.dump(obj_to_dump, mode: :compat)
+    end
+
+    private
+
+    def block_or_attribute_from_object(attribute_config)
+      if attribute_config.block
+        attribute_config.block.call(object)
+      else
+        object.public_send(attribute_config.attr_name)
+      end
+    end
   end
+
 end
