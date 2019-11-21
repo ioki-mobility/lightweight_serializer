@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module LightweightSerializer
   class Serializer
     attr_reader :options

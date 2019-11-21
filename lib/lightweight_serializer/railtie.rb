@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module LightweightSerializer
   class Railtie < Rails::Railtie
     config.eager_load_namespaces << LightweightSerializer
