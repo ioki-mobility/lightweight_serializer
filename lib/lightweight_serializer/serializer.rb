@@ -28,7 +28,12 @@ module LightweightSerializer
       end
 
       def nested(name, serializer:, condition: nil, &blk)
-        defined_nested_serializers[name.to_sym] = NestedResource.new(attr_name: name, block: blk, condition: condition, serializer: serializer)
+        defined_nested_serializers[name.to_sym] = NestedResource.new(
+          attr_name:  name,
+          block:      blk,
+          condition:  condition,
+          serializer: serializer
+        )
         self.allowed_options += serializer.allowed_options
         allowed_options << condition if condition.present?
       end
@@ -87,12 +92,18 @@ module LightweightSerializer
         result[attr_name] = if nested_object.nil?
                               nil
                             else
-                              sub_options = options.slice(*attribute_config.serializer.allowed_options).merge(skip_root: true)
+                              sub_options = options_for_nested_serializer(attribute_config)
                               attribute_config.serializer.new(nested_object, **sub_options).as_json
                             end
       end
 
       result
+    end
+
+    def options_for_nested_serializer(attribute_config)
+      options.
+        slice(*attribute_config.serializer.allowed_options).
+        merge(skip_root: true)
     end
 
     def block_or_attribute_from_object(object, attribute_config)
