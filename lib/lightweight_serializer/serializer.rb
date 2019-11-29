@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'set'
 
 module LightweightSerializer
   class Serializer
@@ -7,7 +8,7 @@ module LightweightSerializer
     def self.inherited(base)
       base.defined_attributes = defined_attributes.deep_dup || {}
       base.defined_nested_serializers = defined_nested_serializers.deep_dup || {}
-      base.allowed_options = allowed_options.deep_dup || []
+      base.allowed_options = allowed_options.deep_dup || Set.new
       super
     end
 
