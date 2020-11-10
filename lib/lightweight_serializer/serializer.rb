@@ -29,6 +29,10 @@ module LightweightSerializer
         end
       end
 
+      def remove_attribute(name)
+        defined_attributes.delete(name.to_sym)
+      end
+
       def nested(name, serializer:, condition: nil, &blk)
         defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:  name,
