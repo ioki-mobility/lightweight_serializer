@@ -22,8 +22,14 @@ module LightweightSerializer
         with_options(group: group_name, &blk)
       end
 
-      def attribute(name, condition: nil, group: nil, &blk)
-        defined_attributes[name.to_sym] = Attribute.new(attr_name: name, group: group, condition: condition, block: blk)
+      def attribute(name, condition: nil, group: nil, **documentation_params, &blk)
+        defined_attributes[name.to_sym] = Attribute.new(
+          attr_name:     name,
+          group:         group,
+          condition:     condition,
+          documentation: documentation_params,
+          block:         blk
+        )
         allowed_options << condition if condition.present?
       end
 
@@ -31,19 +37,33 @@ module LightweightSerializer
         defined_attributes.delete(name.to_sym)
       end
 
-      def nested(name, serializer:, group: nil, condition: nil, &blk)
+      def nested(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
         defined_nested_serializers[name.to_sym] = NestedResource.new(
-          attr_name:  name,
-          block:      blk,
-          condition:  condition,
-          serializer: serializer,
-          group:      group
+          attr_name:     name,
+          block:         blk,
+          condition:     condition,
+          serializer:    serializer,
+          documentation: documentation_params,
+          group:         group,
+          array:         false
         )
         self.allowed_options += serializer.allowed_options
         allowed_options << condition if condition.present?
       end
 
-      alias collection nested
+      def collection(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
+        defined_nested_serializers[name.to_sym] = NestedResource.new(
+          attr_name:     name,
+          block:         blk,
+          condition:     condition,
+          serializer:    serializer,
+          documentation: documentation_params,
+          group:         group,
+          array:         true
+        )
+        self.allowed_options += serializer.allowed_options
+        allowed_options << condition if condition.present?
+      end
 
       def no_root!
         @skip_root_node = true
