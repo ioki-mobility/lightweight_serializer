@@ -18,8 +18,12 @@ module LightweightSerializer
         self.allowed_options += option_names
       end
 
-      def attribute(name, condition: nil, &blk)
-        defined_attributes[name.to_sym] = Attribute.new(attr_name: name, condition: condition, block: blk)
+      def group(group_name, &blk)
+        with_options(group: group_name, &blk)
+      end
+
+      def attribute(name, condition: nil, group: nil, &blk)
+        defined_attributes[name.to_sym] = Attribute.new(attr_name: name, group: group, condition: condition, block: blk)
         allowed_options << condition if condition.present?
       end
 
@@ -27,12 +31,13 @@ module LightweightSerializer
         defined_attributes.delete(name.to_sym)
       end
 
-      def nested(name, serializer:, condition: nil, &blk)
+      def nested(name, serializer:, group: nil, condition: nil, &blk)
         defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:  name,
           block:      blk,
           condition:  condition,
-          serializer: serializer
+          serializer: serializer,
+          group:      group
         )
         self.allowed_options += serializer.allowed_options
         allowed_options << condition if condition.present?
@@ -82,19 +87,31 @@ module LightweightSerializer
       self.class.defined_attributes.each do |attr_name, attribute_config|
         next if attribute_config.condition && !options[attribute_config.condition]
 
-        result[attr_name] = block_or_attribute_from_object(object, attribute_config)
+        if attribute_config.group.present?
+          result[attribute_config.group] ||= {}
+          result[attribute_config.group][attr_name] = block_or_attribute_from_object(object, attribute_config)
+        else
+          result[attr_name] = block_or_attribute_from_object(object, attribute_config)
+        end
       end
 
       self.class.defined_nested_serializers.each do |attr_name, attribute_config|
         next if attribute_config.condition && !options[attribute_config.condition]
 
         nested_object = block_or_attribute_from_object(object, attribute_config)
-        result[attr_name] = if nested_object.nil?
-                              nil
-                            else
-                              sub_options = options_for_nested_serializer(attribute_config)
-                              attribute_config.serializer.new(nested_object, **sub_options).as_json
-                            end
+        value = if nested_object.nil?
+                  nil
+                else
+                  sub_options = options_for_nested_serializer(attribute_config)
+                  attribute_config.serializer.new(nested_object, **sub_options).as_json
+                end
+
+        if attribute_config.group.present?
+          result[attribute_config.group] ||= {}
+          result[attribute_config.group][attr_name] = value
+        else
+          result[attr_name] = value
+        end
       end
 
       result
