@@ -23,12 +23,6 @@ module LightweightSerializer
         allowed_options << condition if condition.present?
       end
 
-      def attributes(*names)
-        names.each do |name|
-          defined_attributes[name.to_sym] = Attribute.new(attr_name: name, block: nil)
-        end
-      end
-
       def remove_attribute(name)
         defined_attributes.delete(name.to_sym)
       end
