@@ -7,38 +7,47 @@ module LightweightSerializer
     attr_reader :options
 
     def self.inherited(base)
-      base.defined_attributes = defined_attributes.deep_dup || {}
-      base.defined_nested_serializers = defined_nested_serializers.deep_dup || {}
-      base.allowed_options = allowed_options.deep_dup || Set.new
+      base.__lws_defined_attributes = __lws_defined_attributes.deep_dup || {}
+      base.__lws_defined_nested_serializers = __lws_defined_nested_serializers.deep_dup || {}
+      base.__lws_serialized_type = __lws_serialized_type.dup
+      base.__lws_serialized_class = __lws_serialized_class.dup
+      base.__lws_allowed_options = __lws_allowed_options.deep_dup || Set.new
       super
     end
 
     class<<self
       def allow_options(*option_names)
-        self.allowed_options += option_names
+        self.__lws_allowed_options += option_names
       end
 
       def group(group_name, &blk)
+        raise ArgumentError, 'cannot use "type" as a group name' if group_name.to_sym == :type
+
         with_options(group: group_name, &blk)
       end
 
       def attribute(name, condition: nil, group: nil, **documentation_params, &blk)
-        defined_attributes[name.to_sym] = Attribute.new(
+        raise ArgumentError, 'cannot use "type" as an attribute name' if name.to_sym == :type
+
+        __lws_defined_attributes[name.to_sym] = Attribute.new(
           attr_name:     name,
           group:         group,
           condition:     condition,
           documentation: documentation_params,
           block:         blk
         )
-        allowed_options << condition if condition.present?
+        __lws_allowed_options << condition if condition.present?
       end
 
       def remove_attribute(name)
-        defined_attributes.delete(name.to_sym)
+        __lws_defined_attributes.delete(name.to_sym)
+        # __lws_defined_nested_serializers.delete(name.to_sym)
       end
 
       def nested(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        defined_nested_serializers[name.to_sym] = NestedResource.new(
+        raise ArgumentError, 'cannot use "type" as a nested attribute name' if name.to_sym == :type
+
+        __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
           block:         blk,
           condition:     condition,
@@ -47,12 +56,14 @@ module LightweightSerializer
           group:         group,
           array:         false
         )
-        self.allowed_options += serializer.allowed_options
-        allowed_options << condition if condition.present?
+        self.__lws_allowed_options += serializer.__lws_allowed_options
+        __lws_allowed_options << condition if condition.present?
       end
 
       def collection(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        defined_nested_serializers[name.to_sym] = NestedResource.new(
+        raise ArgumentError, 'cannot use "type" as a nested collection name' if name.to_sym == :type
+
+        __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
           block:         blk,
           condition:     condition,
@@ -61,19 +72,33 @@ module LightweightSerializer
           group:         group,
           array:         true
         )
-        self.allowed_options += serializer.allowed_options
-        allowed_options << condition if condition.present?
+        self.__lws_allowed_options += serializer.__lws_allowed_options
+        __lws_allowed_options << condition if condition.present?
+      end
+
+      def serializes(type: nil, model: nil)
+        @__lws_serialized_type = type
+        @__lws_serialized_class = model
       end
 
       def no_root!
-        @skip_root_node = true
+        @__lws_skip_root_node = true
       end
 
-      attr_reader :defined_attributes, :defined_nested_serializers, :skip_root_node, :allowed_options
+      attr_reader :__lws_defined_attributes,
+                  :__lws_defined_nested_serializers,
+                  :__lws_skip_root_node,
+                  :__lws_allowed_options,
+                  :__lws_serialized_type,
+                  :__lws_serialized_class
 
       protected
 
-      attr_writer :defined_attributes, :defined_nested_serializers, :allowed_options
+      attr_writer :__lws_defined_attributes,
+                  :__lws_defined_nested_serializers,
+                  :__lws_allowed_options,
+                  :__lws_serialized_type,
+                  :__lws_serialized_class
     end
 
     def initialize(object_or_collection, **options)
@@ -82,13 +107,21 @@ module LightweightSerializer
     end
 
     def as_json
-      result = if @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)
-                 @object_or_collection.map { |o| serialized_object(o) }
+      result = if @object_or_collection.nil?
+                 nil
+               elsif @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)
+                 @object_or_collection.map do |object|
+                   serialized_object(object).tap do |hash|
+                     hash[:type] = type_data(object)
+                   end
+                 end
                else
-                 serialized_object(@object_or_collection)
+                 serialized_object(@object_or_collection).tap do |hash|
+                   hash[:type] = type_data(@object_or_collection)
+                 end
                end
 
-      if self.class.skip_root_node || options[:skip_root]
+      if self.class.__lws_skip_root_node || options[:skip_root]
         result
       else
         { data: result }.tap do |final_hash|
@@ -100,11 +133,9 @@ module LightweightSerializer
     private
 
     def serialized_object(object)
-      return nil if object.nil?
-
       result = {}
 
-      self.class.defined_attributes.each do |attr_name, attribute_config|
+      self.class.__lws_defined_attributes.each do |attr_name, attribute_config|
         next if attribute_config.condition && !options[attribute_config.condition]
 
         if attribute_config.group.present?
@@ -115,7 +146,7 @@ module LightweightSerializer
         end
       end
 
-      self.class.defined_nested_serializers.each do |attr_name, attribute_config|
+      self.class.__lws_defined_nested_serializers.each do |attr_name, attribute_config|
         next if attribute_config.condition && !options[attribute_config.condition]
 
         nested_object = block_or_attribute_from_object(object, attribute_config)
@@ -139,7 +170,7 @@ module LightweightSerializer
 
     def options_for_nested_serializer(attribute_config)
       options.
-        slice(*attribute_config.serializer.allowed_options).
+        slice(*attribute_config.serializer.__lws_allowed_options).
         merge(skip_root: true)
     end
 
@@ -148,6 +179,18 @@ module LightweightSerializer
         instance_exec(object, &attribute_config.block)
       else
         object.public_send(attribute_config.attr_name)
+      end
+    end
+
+    def type_data(object)
+      if self.class.__lws_serialized_type.present?
+        self.class.__lws_serialized_type
+      elsif self.class.__lws_serialized_class.present? && self.class.__lws_serialized_class.is_a?(Class)
+        self.class.__lws_serialized_class.name.underscore
+      elsif self.class.__lws_serialized_class.present? && self.class.__lws_serialized_class.is_a?(String)
+        self.class.__lws_serialized_class.underscore
+      else
+        object.class.name.underscore
       end
     end
   end
