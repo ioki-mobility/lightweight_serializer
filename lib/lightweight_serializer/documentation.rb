@@ -46,7 +46,7 @@ module LightweightSerializer
     end
 
     def self.identifier_for(serializer)
-      serializer.name.gsub(/Serializer\Z/, '').underscore.gsub('/', '--')
+      serializer.name.gsub(/Serializer/, '').underscore.gsub('/', '--')
     end
 
     def identifier
@@ -56,7 +56,7 @@ module LightweightSerializer
     def openapi_schema
       result = {
         type:       'object',
-        properties: hash_with_type_property_filled
+        properties: base_properties_hash
       }
 
       defintions = attribute_definitions + nested_definitions
@@ -75,7 +75,9 @@ module LightweightSerializer
 
     private
 
-    def hash_with_type_property_filled
+    def base_properties_hash
+      return {} if serializer.__lws_skip_automatic_type_field
+
       if type_data.present?
         {
           type: {

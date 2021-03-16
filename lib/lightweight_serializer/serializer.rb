@@ -21,13 +21,13 @@ module LightweightSerializer
       end
 
       def group(group_name, &blk)
-        raise ArgumentError, 'cannot use "type" as a group name' if group_name.to_sym == :type
+        raise ArgumentError, 'cannot use "type" as a group name' if group_name.to_sym == :type && !__lws_skip_automatic_type_field
 
         with_options(group: group_name, &blk)
       end
 
       def attribute(name, condition: nil, group: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as an attribute name' if name.to_sym == :type
+        raise ArgumentError, 'cannot use "type" as an attribute name' if name.to_sym == :type && !__lws_skip_automatic_type_field
 
         __lws_defined_attributes[name.to_sym] = Attribute.new(
           attr_name:     name,
@@ -45,7 +45,7 @@ module LightweightSerializer
       end
 
       def nested(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as a nested attribute name' if name.to_sym == :type
+        raise ArgumentError, 'cannot use "type" as a nested attribute name' if name.to_sym == :type && !__lws_skip_automatic_type_field
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -61,7 +61,7 @@ module LightweightSerializer
       end
 
       def collection(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as a nested collection name' if name.to_sym == :type
+        raise ArgumentError, 'cannot use "type" as a nested collection name' if name.to_sym == :type && !__lws_skip_automatic_type_field
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -85,9 +85,14 @@ module LightweightSerializer
         @__lws_skip_root_node = true
       end
 
+      def no_automatic_type_field!
+        @__lws_skip_automatic_type_field = true
+      end
+
       attr_reader :__lws_defined_attributes,
                   :__lws_defined_nested_serializers,
                   :__lws_skip_root_node,
+                  :__lws_skip_automatic_type_field,
                   :__lws_allowed_options,
                   :__lws_serialized_type,
                   :__lws_serialized_class
@@ -112,12 +117,12 @@ module LightweightSerializer
                elsif @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)
                  @object_or_collection.map do |object|
                    serialized_object(object).tap do |hash|
-                     hash[:type] = type_data(object)
+                     hash[:type] = type_data(object) unless self.class.__lws_skip_automatic_type_field
                    end
                  end
                else
                  serialized_object(@object_or_collection).tap do |hash|
-                   hash[:type] = type_data(@object_or_collection)
+                   hash[:type] = type_data(@object_or_collection) unless self.class.__lws_skip_automatic_type_field
                  end
                end
 
