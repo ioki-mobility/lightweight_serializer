@@ -88,6 +88,8 @@ RSpec.describe LightweightSerializer::Serializer do
       serializes model: 'SuperDuperTestModel'
     end
 
+    inherited_super_duper_test_serializer_class = Class.new(super_duper_test_serializer_class)
+
     super_duper_test_serializer_without_type_class = Class.new(LightweightSerializer::Serializer) do
       no_automatic_type_field!
       serializes model: 'SuperDuperTestModel'
@@ -105,6 +107,7 @@ RSpec.describe LightweightSerializer::Serializer do
     stub_const('ErrorSerializerWithPrivateMethod', error_serializer_with_private_method_class)
     stub_const('TestModelSerializer', test_model_serializer_class)
     stub_const('SuperDuperTestSerializer', super_duper_test_serializer_class)
+    stub_const('InheritedSuperDuperTestSerializer', inherited_super_duper_test_serializer_class)
     stub_const('SuperDuperTestSerializerWithoutTypeField', super_duper_test_serializer_without_type_class)
     stub_const('SomeTestModel', test_model_class)
   end
@@ -385,6 +388,11 @@ RSpec.describe LightweightSerializer::Serializer do
 
       it 'returns an underscored version of the String when a String is given' do
         serializer = SuperDuperTestSerializer.new(OpenStruct.new)
+        expect(serializer.as_json[:data][:type]).to eq('super_duper_test_model')
+      end
+
+      it 'keeps the type information through inheritance' do
+        serializer = InheritedSuperDuperTestSerializer.new(OpenStruct.new)
         expect(serializer.as_json[:data][:type]).to eq('super_duper_test_model')
       end
 
