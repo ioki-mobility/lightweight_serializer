@@ -2,76 +2,81 @@ require 'rails_helper'
 require './lib/lightweight_serializer'
 
 RSpec.describe LightweightSerializer::Documentation do
-  module TestSerializer
-    TestUser = Struct.new(:name, :email)
+  before do
+    user_model = Struct.new(:name, :email)
 
-    class SerializerForModel < LightweightSerializer::Serializer
-      serializes model: TestUser
+    serializer_for_model = Class.new(LightweightSerializer::Serializer) do
+      serializes model: user_model
 
       attribute :name,
-        description: 'Name of the user',
-        nullable: false,
-        type: :string
+                description: 'Name of the user',
+                nullable:    false,
+                type:        :string
 
       attribute :email,
-        description: 'Email of the user',
-        nullable: true,
-        type: :string
+                description: 'Email of the user',
+                nullable:    true,
+                type:        :string
     end
 
-    class SerializerWithoutType < LightweightSerializer::Serializer
+    serializer_without_type = Class.new(LightweightSerializer::Serializer) do
       no_automatic_type_field!
 
       attribute :unnested_attribute,
-        type: :string
+                type: :string
 
       group :details do
         attribute :attr1, type: :string
         attribute :attr2, type: :integer
 
         nested :user,
-          serializer: TestSerializer::SerializerForModel,
-          description: 'Some User',
-          minimum: 2
+               serializer:  serializer_for_model,
+               description: 'Some User',
+               minimum:     2
       end
     end
-  end
 
-  class TestSerializerWithType < LightweightSerializer::Serializer
-    serializes type: :my_cool_type
+    test_serializer_with_type = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :my_cool_type
 
-    attribute :attr,
-      description: 'Test description',
-      type: :string,
-      enum: [:foo, :bar, :baz]
+      attribute :attr,
+                description: 'Test description',
+                type:        :string,
+                enum:        [:foo, :bar, :baz]
 
-    attribute :other_attr,
-      illegal_documentation_key: 'this should not be in the docs'
+      attribute :other_attr,
+                illegal_documentation_key: 'this should not be in the docs'
 
-    attribute :date,
-      type: :datetime
+      attribute :date,
+                type: :datetime
 
-    attribute :attr_without_documentation
+      attribute :attr_without_documentation
 
-    collection :users,
-      type: 'some weird type',
-      illegal_documentation_key: 'this should not be in the docs',
-      serializer: TestSerializer::SerializerForModel,
-      description: 'List of users',
-      minimum: 2
+      collection :users,
+                 type:                      'some weird type',
+                 illegal_documentation_key: 'this should not be in the docs',
+                 serializer:                serializer_for_model,
+                 description:               'List of users',
+                 minimum:                   2
 
-    nested :nested_nullable,
-      description: 'Some nested thing',
-      serializer: TestSerializer::SerializerWithoutType,
-      type: 'some weird type',
-      illegal_documentation_key: 'this should not be in the docs',
-      nullable: true
+      nested :nested_nullable,
+             description:               'Some nested thing',
+             serializer:                serializer_without_type,
+             type:                      'some weird type',
+             illegal_documentation_key: 'this should not be in the docs',
+             nullable:                  true
 
-    nested :nested_not_nullable,
-      description: 'Some nested thing',
-      type: 'some weird type',
-      illegal_documentation_key: 'this should not be in the docs',
-      serializer: TestSerializer::SerializerWithoutType
+      nested :nested_not_nullable,
+             description:               'Some nested thing',
+             type:                      'some weird type',
+             illegal_documentation_key: 'this should not be in the docs',
+             serializer:                serializer_without_type
+    end
+
+    stub_const('TestSerializer::TestUser', user_model)
+    stub_const('TestSerializer::SerializerForModel', serializer_for_model)
+    stub_const('TestSerializer::SerializerWithoutType', serializer_without_type)
+    stub_const('TestSerializerWithType', test_serializer_with_type)
   end
 
   describe '.identifier_for' do
@@ -176,7 +181,7 @@ RSpec.describe LightweightSerializer::Documentation do
 
       context 'when no information about serialized type is given' do
         let(:serializer) do
-          Class.new(LightweightSerializer::Serializer) { }
+          Class.new(LightweightSerializer::Serializer) {}
         end
 
         it 'adds a type field' do
@@ -237,7 +242,7 @@ RSpec.describe LightweightSerializer::Documentation do
       end
 
       it 'generates a reference to the given serializer for the items' do
-        expect(subject[:properties][:users][:items][:'$ref']).to eq('#/components/schemas/test--for_model')
+        expect(subject[:properties][:users][:items][:$ref]).to eq('#/components/schemas/test--for_model')
       end
     end
 
@@ -258,7 +263,7 @@ RSpec.describe LightweightSerializer::Documentation do
 
       it 'generates a oneOf-array with reference and null' do
         expect(subject[:properties][:nested_nullable][:oneOf]).to be_kind_of(Array)
-        expect(subject[:properties][:nested_nullable][:oneOf].first[:'$ref']).to eq('#/components/schemas/test--without_type')
+        expect(subject[:properties][:nested_nullable][:oneOf].first[:$ref]).to eq('#/components/schemas/test--without_type')
         expect(subject[:properties][:nested_nullable][:oneOf].second[:type]).to eq(:null)
       end
     end
@@ -279,7 +284,7 @@ RSpec.describe LightweightSerializer::Documentation do
 
       it 'generates an allOf-array with reference' do
         expect(subject[:properties][:nested_not_nullable][:allOf]).to be_kind_of(Array)
-        expect(subject[:properties][:nested_not_nullable][:allOf].first[:'$ref']).to eq('#/components/schemas/test--without_type')
+        expect(subject[:properties][:nested_not_nullable][:allOf].first[:$ref]).to eq('#/components/schemas/test--without_type')
       end
     end
 
@@ -288,8 +293,8 @@ RSpec.describe LightweightSerializer::Documentation do
         let(:serializer) do
           Class.new(LightweightSerializer::Serializer) do
             attribute :nullable_with_enum,
-              nullable: true,
-              enum: [:foo, :bar, :baz]
+                      nullable: true,
+                      enum:     [:foo, :bar, :baz]
           end
         end
 

@@ -2,95 +2,111 @@ require 'rails_helper'
 require './lib/lightweight_serializer'
 
 RSpec.describe LightweightSerializer::Serializer do
-  class AddressSerializer < LightweightSerializer::Serializer
-    serializes type: :address
+  before do
+    address_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :address
 
-    allow_options :look_up_zip_for_city
+      allow_options :look_up_zip_for_city
 
-    attribute(:address_type)
-    attribute(:street)
-    attribute(:number)
-    attribute(:city) { |object| object.city.upcase }
-  end
-
-  class ErrorSerializer < LightweightSerializer::Serializer
-    no_root!
-
-    attribute :message
-  end
-
-  class ErrorSerializerWithPrivateMethod < LightweightSerializer::Serializer
-    attribute :message
-    attribute(:translated_message) { |object| translate(object.message) }
-
-    private
-
-    def translate(message)
-      message.reverse
-    end
-  end
-
-  class DrinkSerializer < LightweightSerializer::Serializer
-    serializes type: :drink
-
-    attribute :brand
-    attribute :name
-    attribute :serving_size, condition: :show_serving_size
-  end
-
-  class HeatedDrinkSerializer < DrinkSerializer
-    attribute :optimal_drinking_temperature
-  end
-
-  class UnbrandedDrinkSerializer < DrinkSerializer
-    remove_attribute :brand
-  end
-
-  class PersonSerializer < LightweightSerializer::Serializer
-    serializes type: :person
-
-    attribute(:phone_number) { |object| Phony.format(object.phone_number) }
-
-    group :detailed_name do
-      attribute :first_name
-      attribute :middle_name
-      attribute :last_name
+      attribute(:address_type)
+      attribute(:street)
+      attribute(:number)
+      attribute(:city) { |object| object.city.upcase }
     end
 
-    collection :addresses, serializer: AddressSerializer
-    nested :favorite_drink, serializer: DrinkSerializer
-
-    collection :errors, serializer: ErrorSerializer do
-      [OpenStruct.new(message: 'Test Error #1')]
+    error_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      no_root!
+      attribute :message
     end
-  end
 
-  class FooSerializer < LightweightSerializer::Serializer
-    allow_options :user
-  end
+    error_serializer_with_private_method_class = Class.new(LightweightSerializer::Serializer) do
+      attribute :message
+      attribute(:translated_message) { |object| translate(object.message) }
 
-  class BarSerializer < LightweightSerializer::Serializer
-    allow_options :user
-  end
+      private
 
-  class FooBarSerializer < LightweightSerializer::Serializer
-    nested :foo, serializer: FooSerializer
-    nested :bar, serializer: BarSerializer
-  end
+      def translate(message)
+        message.reverse
+      end
+    end
 
-  SomeTestModel = Struct.new(:foo, :bar)
+    drink_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :drink
 
-  class TestModelSerializer < LightweightSerializer::Serializer
-    serializes model: SomeTestModel
-  end
+      attribute :brand
+      attribute :name
+      attribute :serving_size, condition: :show_serving_size
+    end
 
-  class SuperDuperTestSerializer < LightweightSerializer::Serializer
-    serializes model: 'SuperDuperTestModel'
-  end
+    heated_drink_serializer_class = Class.new(drink_serializer_class) do
+      attribute :optimal_drinking_temperature
+    end
 
-  class SuperDuperTestSerializerWithoutTypeField < LightweightSerializer::Serializer
-    no_automatic_type_field!
-    serializes model: 'SuperDuperTestModel'
+    unbranded_drink_serializer_class = Class.new(drink_serializer_class) do
+      remove_attribute :brand
+    end
+
+    person_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :person
+
+      attribute(:phone_number) { |object| Phony.format(object.phone_number) }
+
+      group :detailed_name do
+        attribute :first_name
+        attribute :middle_name
+        attribute :last_name
+      end
+
+      collection :addresses, serializer: address_serializer_class
+      nested :favorite_drink, serializer: drink_serializer_class
+
+      collection :errors, serializer: error_serializer_class do
+        [OpenStruct.new(message: 'Test Error #1')]
+      end
+    end
+
+    foo_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      allow_options :user
+    end
+
+    bar_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      allow_options :user
+    end
+
+    foo_bar_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      nested :foo, serializer: foo_serializer_class
+      nested :bar, serializer: bar_serializer_class
+    end
+
+    test_model_class = Struct.new(:foo, :bar)
+
+    test_model_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      serializes model: test_model_class
+    end
+
+    super_duper_test_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      serializes model: 'SuperDuperTestModel'
+    end
+
+    super_duper_test_serializer_without_type_class = Class.new(LightweightSerializer::Serializer) do
+      no_automatic_type_field!
+      serializes model: 'SuperDuperTestModel'
+    end
+
+    stub_const('AddressSerializer', address_serializer_class)
+    stub_const('PersonSerializer', person_serializer_class)
+    stub_const('ErrorSerializer', error_serializer_class)
+    stub_const('FooSerializer', foo_serializer_class)
+    stub_const('BarSerializer', bar_serializer_class)
+    stub_const('FooBarSerializer', foo_bar_serializer_class)
+    stub_const('DrinkSerializer', drink_serializer_class)
+    stub_const('HeatedDrinkSerializer', heated_drink_serializer_class)
+    stub_const('UnbrandedDrinkSerializer', unbranded_drink_serializer_class)
+    stub_const('ErrorSerializerWithPrivateMethod', error_serializer_with_private_method_class)
+    stub_const('TestModelSerializer', test_model_serializer_class)
+    stub_const('SuperDuperTestSerializer', super_duper_test_serializer_class)
+    stub_const('SuperDuperTestSerializerWithoutTypeField', super_duper_test_serializer_without_type_class)
+    stub_const('SomeTestModel', test_model_class)
   end
 
   let(:drink_model) { OpenStruct.new(brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml') }
