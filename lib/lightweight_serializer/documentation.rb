@@ -4,6 +4,8 @@ module LightweightSerializer
   class Documentation
     attr_reader :serializer
 
+    TYPE_FIELD_DESCRIPTION = 'A string identifying the type of the serialized object'
+
     ALLOWED_SCHEMA_ATTRIBUTES = [
       :title,
       :multipleOf,
@@ -50,7 +52,7 @@ module LightweightSerializer
     end
 
     def identifier
-      self.class.identifier_for(serializer)
+      @identifier ||= self.class.identifier_for(serializer)
     end
 
     def openapi_schema
@@ -82,7 +84,7 @@ module LightweightSerializer
         {
           type: {
             type:        :string,
-            description: 'A string identifying the type of the serialized object',
+            description: TYPE_FIELD_DESCRIPTION,
             enum:        [type_data],
             example:     type_data
           }
@@ -91,7 +93,7 @@ module LightweightSerializer
         {
           type: {
             type:        :string,
-            description: 'A string identifying the type of the serialized object'
+            description: TYPE_FIELD_DESCRIPTION
           }
         }
       end
@@ -117,15 +119,15 @@ module LightweightSerializer
 
     def nested_definitions
       serializer.__lws_defined_nested_serializers.map do |attr_name, config|
-        documentation = sanitized_documentation_hash(config.documentation)
+        documentation = sanitized_documentation_hash(config.documentation, remove_type: true)
 
         if config.array
           documentation[:type] = :array
           documentation[:items] = { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" }
         elsif documentation[:nullable]
           documentation[:oneOf] = [
-            { type: :null },
-            { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" }
+            { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" },
+            { type: :null }
           ]
         else
           documentation[:allOf] = [
@@ -137,8 +139,15 @@ module LightweightSerializer
       end
     end
 
-    def sanitized_documentation_hash(hash)
-      hash.slice(*ALLOWED_SCHEMA_ATTRIBUTES)
+    def sanitized_documentation_hash(hash, remove_type: false)
+      removed_attributes = ALLOWED_SCHEMA_ATTRIBUTES
+      removed_attributes -= [:type] if remove_type
+
+      hash.slice(*removed_attributes).tap do |result|
+        if result[:nullable] && result[:enum].is_a?(Array)
+          result[:enum] << nil
+        end
+      end
     end
   end
 end
