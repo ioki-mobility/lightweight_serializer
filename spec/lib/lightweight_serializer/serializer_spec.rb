@@ -425,7 +425,7 @@ RSpec.describe LightweightSerializer::Serializer do
         Class.new(LightweightSerializer::Serializer) do
           attribute :type
         end
-      end.to raise_error(ArgumentError, 'cannot use "type" as an attribute name')
+      end.to raise_error(ArgumentError)
     end
 
     it 'does not allow `type` as a group name' do
@@ -435,7 +435,7 @@ RSpec.describe LightweightSerializer::Serializer do
             attribute :foo
           end
         end
-      end.to raise_error(ArgumentError, 'cannot use "type" as a group name')
+      end.to raise_error(ArgumentError)
     end
 
     it 'does not allow `type` as a nested name' do
@@ -443,7 +443,7 @@ RSpec.describe LightweightSerializer::Serializer do
         Class.new(LightweightSerializer::Serializer) do
           nested :type, serializer: AddressSerializer
         end
-      end.to raise_error(ArgumentError, 'cannot use "type" as a nested attribute name')
+      end.to raise_error(ArgumentError)
     end
 
     it 'does not allow `type` as a collection name' do
@@ -451,7 +451,7 @@ RSpec.describe LightweightSerializer::Serializer do
         Class.new(LightweightSerializer::Serializer) do
           collection :type, serializer: AddressSerializer
         end
-      end.to raise_error(ArgumentError, 'cannot use "type" as a nested collection name')
+      end.to raise_error(ArgumentError)
     end
   end
 end
