@@ -21,13 +21,13 @@ module LightweightSerializer
       end
 
       def group(group_name, &blk)
-        raise ArgumentError, 'cannot use "type" as a group name' if group_name.to_sym == :type && !__lws_skip_automatic_type_field
+        ensure_valid_name!(group_name)
 
         with_options(group: group_name, &blk)
       end
 
       def attribute(name, condition: nil, group: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as an attribute name' if name.to_sym == :type && !__lws_skip_automatic_type_field
+        ensure_valid_name!(name)
 
         __lws_defined_attributes[name.to_sym] = Attribute.new(
           attr_name:     name,
@@ -41,11 +41,11 @@ module LightweightSerializer
 
       def remove_attribute(name)
         __lws_defined_attributes.delete(name.to_sym)
-        # __lws_defined_nested_serializers.delete(name.to_sym)
+        __lws_defined_nested_serializers.delete(name.to_sym)
       end
 
       def nested(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as a nested attribute name' if name.to_sym == :type && !__lws_skip_automatic_type_field
+        ensure_valid_name!(name)
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -61,7 +61,7 @@ module LightweightSerializer
       end
 
       def collection(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
-        raise ArgumentError, 'cannot use "type" as a nested collection name' if name.to_sym == :type && !__lws_skip_automatic_type_field
+        ensure_valid_name!(name)
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -104,6 +104,19 @@ module LightweightSerializer
                   :__lws_allowed_options,
                   :__lws_serialized_type,
                   :__lws_serialized_class
+
+      private
+
+      def ensure_valid_name!(attr_name)
+        return if attr_name != :type
+        return if __lws_skip_automatic_type_field
+
+        raise ArgumentError, <<~ERROR_MESSAGE
+          Cannot use "type" as a an attribute name with automatic type-field-generation.
+
+          Either use a prefixed type name (like "user_type") or add "no_automatic_type_field!" to the definition.
+        ERROR_MESSAGE
+      end
     end
 
     def initialize(object_or_collection, **options)
