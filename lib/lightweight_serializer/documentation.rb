@@ -121,17 +121,19 @@ module LightweightSerializer
       serializer.__lws_defined_nested_serializers.map do |attr_name, config|
         documentation = sanitized_documentation_hash(config.documentation, remove_type: true)
 
+        ref_identifier = config.documentation[:ref_override].presence || self.class.identifier_for(config[:serializer])
+
         if config.array
           documentation[:type] = :array
-          documentation[:items] = { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" }
+          documentation[:items] = { '$ref': "#/components/schemas/#{ref_identifier}" }
         elsif documentation[:nullable]
           documentation[:oneOf] = [
-            { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" },
+            { '$ref': "#/components/schemas/#{ref_identifier}" },
             { type: :null }
           ]
         else
           documentation[:allOf] = [
-            { '$ref': "#/components/schemas/#{self.class.identifier_for(config[:serializer])}" }
+            { '$ref': "#/components/schemas/#{ref_identifier}" }
           ]
         end
 

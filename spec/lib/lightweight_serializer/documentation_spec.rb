@@ -71,6 +71,11 @@ RSpec.describe LightweightSerializer::Documentation do
              type:                      'some weird type',
              illegal_documentation_key: 'this should not be in the docs',
              serializer:                serializer_without_type
+
+      nested :nested_with_overriden_ref,
+             description:  'Some more nested thing',
+             serializer:   serializer_without_type,
+             ref_override: 'my-own-reference'
     end
 
     stub_const('TestSerializer::TestUser', user_model)
@@ -285,6 +290,12 @@ RSpec.describe LightweightSerializer::Documentation do
       it 'generates an allOf-array with reference' do
         expect(subject[:properties][:nested_not_nullable][:allOf]).to be_kind_of(Array)
         expect(subject[:properties][:nested_not_nullable][:allOf].first[:$ref]).to eq('#/components/schemas/test--without_type')
+      end
+    end
+
+    describe 'nested with overriden reference' do
+      it 'generates the correct ref' do
+        expect(subject[:properties][:nested_with_overriden_ref][:allOf].first[:$ref]).to eq('#/components/schemas/my-own-reference')
       end
     end
 
