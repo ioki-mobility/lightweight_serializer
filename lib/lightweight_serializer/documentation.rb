@@ -145,7 +145,7 @@ module LightweightSerializer
       removed_attributes = ALLOWED_SCHEMA_ATTRIBUTES
       removed_attributes -= [:type] if remove_type
 
-      hash.slice(*removed_attributes).tap do |result|
+      hash.deep_dup.slice(*removed_attributes).tap do |result|
         if result[:nullable] && result[:enum].is_a?(Array)
           result[:enum] << nil
         end
