@@ -132,9 +132,7 @@ module LightweightSerializer
             { type: :null }
           ]
         else
-          documentation[:allOf] = [
-            { '$ref': "#/components/schemas/#{ref_identifier}" }
-          ]
+          documentation[:$ref] = "#/components/schemas/#{ref_identifier}"
         end
 
         [attr_name, config.group, documentation]

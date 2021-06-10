@@ -287,15 +287,14 @@ RSpec.describe LightweightSerializer::Documentation do
         expect(subject[:properties][:nested_not_nullable].keys).not_to include(:type)
       end
 
-      it 'generates an allOf-array with reference' do
-        expect(subject[:properties][:nested_not_nullable][:allOf]).to be_kind_of(Array)
-        expect(subject[:properties][:nested_not_nullable][:allOf].first[:$ref]).to eq('#/components/schemas/test--without_type')
+      it 'adds the reference' do
+        expect(subject[:properties][:nested_not_nullable][:$ref]).to eq('#/components/schemas/test--without_type')
       end
     end
 
     describe 'nested with overriden reference' do
       it 'generates the correct ref' do
-        expect(subject[:properties][:nested_with_overriden_ref][:allOf].first[:$ref]).to eq('#/components/schemas/my-own-reference')
+        expect(subject[:properties][:nested_with_overriden_ref][:$ref]).to eq('#/components/schemas/my-own-reference')
       end
     end
 
