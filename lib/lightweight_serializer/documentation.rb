@@ -144,6 +144,11 @@ module LightweightSerializer
       removed_attributes -= [:type] if remove_type
 
       hash.deep_dup.slice(*removed_attributes).tap do |result|
+        if result[:nullable] && !remove_type
+          result[:type] = Array.wrap(result[:type])
+          result[:type] << :null
+        end
+
         if result[:nullable] && result[:enum].is_a?(Array)
           result[:enum] << nil
         end

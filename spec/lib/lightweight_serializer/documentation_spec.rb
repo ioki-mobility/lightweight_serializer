@@ -47,6 +47,10 @@ RSpec.describe LightweightSerializer::Documentation do
       attribute :other_attr,
                 illegal_documentation_key: 'this should not be in the docs'
 
+      attribute :nullable_string,
+                type:     :string,
+                nullable: true
+
       attribute :date,
                 type: :datetime
 
@@ -208,6 +212,13 @@ RSpec.describe LightweightSerializer::Documentation do
 
         it 'does not add a type field' do
           expect(subject[:properties].keys).not_to include(:type)
+        end
+      end
+
+      context 'when an attribute is nullable' do
+        it 'makes type an array and adds null' do
+          expect(subject[:properties][:nullable_string][:type]).to be_kind_of(Array)
+          expect(subject[:properties][:nullable_string][:type]).to match_array([:string, :null])
         end
       end
     end
