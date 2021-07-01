@@ -52,7 +52,8 @@ RSpec.describe LightweightSerializer::Documentation do
                 nullable: true
 
       attribute :date,
-                type: :datetime
+                type:   :string,
+                format: 'date-time'
 
       attribute :attr_without_documentation
 
