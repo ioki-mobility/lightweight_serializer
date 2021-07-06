@@ -15,7 +15,7 @@ module LightweightSerializer
       super
     end
 
-    class<<self
+    class << self
       def allow_options(*option_names)
         self.__lws_allowed_options += option_names
       end
