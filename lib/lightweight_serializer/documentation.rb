@@ -145,7 +145,8 @@ module LightweightSerializer
             end
           end
         else
-          ref_identifier = config.documentation[:ref_override].presence || self.class.identifier_for(config[:serializer])
+          ref_identifier = config.documentation[:ref_override].presence ||
+                           self.class.identifier_for(config[:serializer])
 
           if config.array
             documentation[:type] = :array

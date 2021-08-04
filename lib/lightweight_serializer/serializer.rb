@@ -126,7 +126,9 @@ module LightweightSerializer
       private
 
       def ensure_valid_serializers!(serializer_data)
-        return if serializer_data.is_a?(Hash) && serializer_data.values.all? { |serializer| serializer.ancestors.include?(LightweightSerializer::Serializer) }
+        return if serializer_data.is_a?(Hash) && serializer_data.values.all? do |serializer|
+          serializer.ancestors.include?(LightweightSerializer::Serializer)
+        end
         return if serializer_data.ancestors.include?(LightweightSerializer::Serializer)
 
         raise ArgumentError, <<~ERROR_MESSAGE
