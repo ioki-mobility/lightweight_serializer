@@ -46,6 +46,7 @@ module LightweightSerializer
 
       def nested(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
         ensure_valid_name!(name)
+        ensure_valid_serializers!(serializer)
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -56,12 +57,17 @@ module LightweightSerializer
           group:         group,
           array:         false
         )
-        self.__lws_allowed_options += serializer.__lws_allowed_options
+
+        serializer_classes_from(serializer).each do |serializer_class|
+          self.__lws_allowed_options += serializer_class.__lws_allowed_options
+        end
+
         __lws_allowed_options << condition if condition.present?
       end
 
       def collection(name, serializer:, group: nil, condition: nil, **documentation_params, &blk)
         ensure_valid_name!(name)
+        ensure_valid_serializers!(serializer)
 
         __lws_defined_nested_serializers[name.to_sym] = NestedResource.new(
           attr_name:     name,
@@ -72,7 +78,11 @@ module LightweightSerializer
           group:         group,
           array:         true
         )
-        self.__lws_allowed_options += serializer.__lws_allowed_options
+
+        serializer_classes_from(serializer).each do |serializer_class|
+          self.__lws_allowed_options += serializer_class.__lws_allowed_options
+        end
+
         __lws_allowed_options << condition if condition.present?
       end
 
@@ -105,7 +115,27 @@ module LightweightSerializer
                   :__lws_serialized_type,
                   :__lws_serialized_class
 
+      def serializer_classes_from(serializer_data)
+        if serializer_data.is_a?(Hash)
+          serializer_data.values
+        else
+          [serializer_data]
+        end
+      end
+
       private
+
+      def ensure_valid_serializers!(serializer_data)
+        return if serializer_data.is_a?(Hash) && serializer_data.values.all? { |serializer| serializer.ancestors.include?(LightweightSerializer::Serializer) }
+        return if serializer_data.ancestors.include?(LightweightSerializer::Serializer)
+
+        raise ArgumentError, <<~ERROR_MESSAGE
+          The nested serializers must be defined as:
+            - A class derived from LightweightSerializer::Serializer
+            - A hash in the format:
+                { ModelClass => SerializerClass, OtherModelClass => OtherSerializerClass }
+        ERROR_MESSAGE
+      end
 
       def ensure_valid_name!(attr_name)
         return if attr_name != :type
@@ -170,9 +200,26 @@ module LightweightSerializer
         nested_object = block_or_attribute_from_object(object, attribute_config)
         value = if nested_object.nil?
                   nil
+                elsif nested_object.is_a?(Array)
+                  nested_object.map do |nested_element|
+                    sub_options = options_for_nested_serializer(attribute_config)
+
+                    serializer_class = serializer_for(
+                      attribute_config.serializer,
+                      nested_element.class
+                    )
+
+                    serializer_class.new(nested_element, **sub_options).as_json
+                  end
                 else
                   sub_options = options_for_nested_serializer(attribute_config)
-                  attribute_config.serializer.new(nested_object, **sub_options).as_json
+
+                  serializer_class = serializer_for(
+                    attribute_config.serializer,
+                    nested_object.class
+                  )
+
+                  serializer_class.new(nested_object, **sub_options).as_json
                 end
 
         if attribute_config.group.present?
@@ -186,9 +233,29 @@ module LightweightSerializer
       result
     end
 
+    def serializer_for(serializer_data, model_class)
+      if serializer_data.is_a?(Hash)
+        serializer_data[model_class]
+      else
+        serializer_data
+      end
+    end
+
+    def serializer_classes(serializer_data)
+      if serializer_data.is_a?(Hash)
+        serializer_data.values
+      else
+        [serializer_data]
+      end
+    end
+
     def options_for_nested_serializer(attribute_config)
+      allowed_options = serializer_classes(attribute_config.serializer).
+        map { |serializer| serializer.__lws_allowed_options.to_a }.
+        flatten
+
       options.
-        slice(*attribute_config.serializer.__lws_allowed_options).
+        slice(*allowed_options).
         merge(skip_root: true)
     end
 

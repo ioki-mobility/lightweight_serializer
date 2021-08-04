@@ -4,8 +4,9 @@ require './lib/lightweight_serializer'
 RSpec.describe LightweightSerializer::Documentation do
   before do
     user_model = Struct.new(:name, :email)
+    admin_model = Struct.new(:name, :email, :access_level)
 
-    serializer_for_model = Class.new(LightweightSerializer::Serializer) do
+    serializer_for_user = Class.new(LightweightSerializer::Serializer) do
       serializes model: user_model
 
       attribute :name,
@@ -16,6 +17,26 @@ RSpec.describe LightweightSerializer::Documentation do
       attribute :email,
                 description: 'Email of the user',
                 nullable:    true,
+                type:        :string
+    end
+
+    serializer_for_admin = Class.new(LightweightSerializer::Serializer) do
+      serializes model: admin_model
+
+      attribute :name,
+                description: 'Name of the admin',
+                nullable:    false,
+                type:        :string
+
+      attribute :email,
+                description: 'Email of the admin',
+                nullable:    true,
+                type:        :string
+
+      attribute :access_level,
+                descriotion: 'Access level of the admin',
+                nullable:    false,
+                enum:        [:read_only, :some_access, :more_access, :all_access],
                 type:        :string
     end
 
@@ -30,10 +51,31 @@ RSpec.describe LightweightSerializer::Documentation do
         attribute :attr2, type: :integer
 
         nested :user,
-               serializer:  serializer_for_model,
+               serializer:  serializer_for_user,
                description: 'Some User',
                minimum:     2
       end
+    end
+
+    test_serializer_with_multiple_collection_serializers = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :something_cool
+
+      collection :users,
+                 type:                      'some weird type',
+                 illegal_documentation_key: 'this should not be in the docs',
+                 serializer:                {
+                   user_model  => serializer_for_user,
+                   admin_model => serializer_for_admin
+                 },
+                 description:               'List of users',
+                 minimum:                   2
+
+      nested :who_did_it,
+             serializer: {
+               user_model  => serializer_for_user,
+               admin_model => serializer_for_admin
+             },
+             nullable:   true
     end
 
     test_serializer_with_type = Class.new(LightweightSerializer::Serializer) do
@@ -60,7 +102,7 @@ RSpec.describe LightweightSerializer::Documentation do
       collection :users,
                  type:                      'some weird type',
                  illegal_documentation_key: 'this should not be in the docs',
-                 serializer:                serializer_for_model,
+                 serializer:                serializer_for_user,
                  description:               'List of users',
                  minimum:                   2
 
@@ -84,15 +126,19 @@ RSpec.describe LightweightSerializer::Documentation do
     end
 
     stub_const('TestSerializer::TestUser', user_model)
-    stub_const('TestSerializer::SerializerForModel', serializer_for_model)
+    stub_const('TestSerializer::TestAdmin', admin_model)
+    stub_const('TestSerializer::SerializerForUser', serializer_for_user)
+    stub_const('TestSerializer::SerializerForAdmin', serializer_for_admin)
     stub_const('TestSerializer::SerializerWithoutType', serializer_without_type)
+    stub_const('TestSerializer::SerializerWithMultipleSubs', test_serializer_with_multiple_collection_serializers)
     stub_const('TestSerializerWithType', test_serializer_with_type)
   end
 
   describe '.identifier_for' do
     it 'generates identifiers based on the serializer class name' do
       expect(described_class.identifier_for(TestSerializerWithType)).to eq('test_with_type')
-      expect(described_class.identifier_for(TestSerializer::SerializerForModel)).to eq('test--for_model')
+      expect(described_class.identifier_for(TestSerializer::SerializerForUser)).to eq('test--for_user')
+      expect(described_class.identifier_for(TestSerializer::SerializerForAdmin)).to eq('test--for_admin')
       expect(described_class.identifier_for(TestSerializer::SerializerWithoutType)).to eq('test--without_type')
     end
   end
@@ -259,7 +305,7 @@ RSpec.describe LightweightSerializer::Documentation do
       end
 
       it 'generates a reference to the given serializer for the items' do
-        expect(subject[:properties][:users][:items][:$ref]).to eq('#/components/schemas/test--for_model')
+        expect(subject[:properties][:users][:items][:$ref]).to eq('#/components/schemas/test--for_user')
       end
     end
 
@@ -301,6 +347,24 @@ RSpec.describe LightweightSerializer::Documentation do
 
       it 'adds the reference' do
         expect(subject[:properties][:nested_not_nullable][:$ref]).to eq('#/components/schemas/test--without_type')
+      end
+
+      context 'with multiple nested serializer options' do
+        let(:serializer) { TestSerializer::SerializerWithMultipleSubs }
+
+        it 'correctly serializes an array with multiple items' do
+          expect(subject[:properties][:users][:type]).to eq(:array)
+          expect(subject[:properties][:users][:items][:oneOf]).to be_kind_of(Array)
+          expect(subject[:properties][:users][:items][:oneOf][0][:$ref]).to eq('#/components/schemas/test--for_user')
+          expect(subject[:properties][:users][:items][:oneOf][1][:$ref]).to eq('#/components/schemas/test--for_admin')
+        end
+
+        it 'correctly serializes one attribute with mutliple serializers' do
+          expect(subject[:properties][:who_did_it][:oneOf]).to be_kind_of(Array)
+          expect(subject[:properties][:who_did_it][:oneOf][0][:$ref]).to eq('#/components/schemas/test--for_user')
+          expect(subject[:properties][:who_did_it][:oneOf][1][:$ref]).to eq('#/components/schemas/test--for_admin')
+          expect(subject[:properties][:who_did_it][:oneOf][2][:type]).to eq(:null)
+        end
       end
     end
 

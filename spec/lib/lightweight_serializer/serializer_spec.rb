@@ -46,6 +46,20 @@ RSpec.describe LightweightSerializer::Serializer do
       remove_attribute :brand
     end
 
+    drink_model_class = Struct.new(:brand, :name, :serving_size, keyword_init: true)
+    heated_drink_model_class = Struct.new(:brand, :name, :serving_size, :optimal_drinking_temperature, keyword_init: true)
+    unbranded_drink_model_class = Struct.new(:name, :serving_size, keyword_init: true)
+
+    fridge_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      collection :drinks, serializer: {
+        drink_model_class           => drink_serializer_class,
+        heated_drink_model_class    => heated_drink_serializer_class,
+        unbranded_drink_model_class => unbranded_drink_serializer_class
+      }
+    end
+
+    fridge_model_class = Struct.new(:drinks, keyword_init: true)
+
     person_serializer_class = Class.new(LightweightSerializer::Serializer) do
       serializes type: :person
 
@@ -101,9 +115,17 @@ RSpec.describe LightweightSerializer::Serializer do
     stub_const('FooSerializer', foo_serializer_class)
     stub_const('BarSerializer', bar_serializer_class)
     stub_const('FooBarSerializer', foo_bar_serializer_class)
+
     stub_const('DrinkSerializer', drink_serializer_class)
     stub_const('HeatedDrinkSerializer', heated_drink_serializer_class)
     stub_const('UnbrandedDrinkSerializer', unbranded_drink_serializer_class)
+    stub_const('DrinkModel', drink_model_class)
+    stub_const('HeatedDrinkModel', heated_drink_model_class)
+    stub_const('UnbrandedDrink', unbranded_drink_model_class)
+
+    stub_const('FridgeSerializer', fridge_serializer_class)
+    stub_const('FridgeModel', fridge_model_class)
+
     stub_const('ErrorSerializerWithPrivateMethod', error_serializer_with_private_method_class)
     stub_const('TestModelSerializer', test_model_serializer_class)
     stub_const('SuperDuperTestSerializer', super_duper_test_serializer_class)
@@ -112,7 +134,7 @@ RSpec.describe LightweightSerializer::Serializer do
     stub_const('SomeTestModel', test_model_class)
   end
 
-  let(:drink_model) { OpenStruct.new(brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml') }
+  let(:drink_model) { DrinkModel.new(brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml') }
   let(:person_model) { OpenStruct.new(first_name: 'John', middle_name: 'Eric', last_name: 'Doe', phone_number: '16465551234', addresses: [address_2_model, address_1_model], favorite_drink: drink_model, errors: []) }
   let(:address_1_model) { OpenStruct.new(type: :office, street: 'Main Boulevard', number: 1337, city: 'Foozen') }
   let(:address_2_model) { OpenStruct.new(type: :private, street: 'Side Street', number: 42, city: 'Foozen') }
@@ -297,7 +319,8 @@ RSpec.describe LightweightSerializer::Serializer do
       it 'passes options down to the nested objects' do
         serializer = PersonSerializer.new(person_model, show_serving_size: true, look_up_zip_for_city: true)
 
-        expect(AddressSerializer).to receive(:new).with(Array, skip_root: true, look_up_zip_for_city: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_2_model, skip_root: true, look_up_zip_for_city: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_1_model, skip_root: true, look_up_zip_for_city: true).and_call_original
         expect(DrinkSerializer).to receive(:new).with(drink_model, skip_root: true, show_serving_size: true).and_call_original
 
         serializer.as_json
@@ -306,7 +329,8 @@ RSpec.describe LightweightSerializer::Serializer do
 
     describe 'collections' do
       it 'uses the given serializer' do
-        expect(AddressSerializer).to receive(:new).with([address_2_model, address_1_model], skip_root: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_2_model, skip_root: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_1_model, skip_root: true).and_call_original
 
         person_serializer.as_json
       end
@@ -345,6 +369,21 @@ RSpec.describe LightweightSerializer::Serializer do
       it 'returns nil when the collection is nil' do
         person_model.addresses = nil
         expect(person_serializer.as_json[:data][:addresses]).to be_nil
+      end
+
+      context 'when we specified multiple serializers depending on the given model' do
+        let(:drink1) { UnbrandedDrink.new(name: 'Milk', serving_size: '1 glass') }
+        let(:drink2) { DrinkModel.new(brand: 'Pepsi', name: 'Max Cherry', serving_size: '1 bottle') }
+        let(:drink3) { HeatedDrinkModel.new(brand: 'Teekanne', name: 'Heiße Liebe', serving_size: '1 mug') }
+        let(:fridge) { FridgeModel.new(drinks: [drink1, drink2, drink3]) }
+
+        let(:fridge_serializer) { FridgeSerializer.new(fridge) }
+
+        it 'uses a different serializer for each array item based on the type of array element' do
+          expect(fridge_serializer.as_json[:data][:drinks].first).to eq(UnbrandedDrinkSerializer.new(drink1, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks].second).to eq(DrinkSerializer.new(drink2, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks].third).to eq(HeatedDrinkSerializer.new(drink3, skip_root: true).as_json)
+        end
       end
     end
 

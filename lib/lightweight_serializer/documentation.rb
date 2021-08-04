@@ -121,18 +121,43 @@ module LightweightSerializer
       serializer.__lws_defined_nested_serializers.map do |attr_name, config|
         documentation = sanitized_documentation_hash(config.documentation, remove_type: true)
 
-        ref_identifier = config.documentation[:ref_override].presence || self.class.identifier_for(config[:serializer])
+        if config[:serializer].is_a?(Hash)
+          ref_identifiers = config[:serializer].values.map do |serializer|
+            self.class.identifier_for(serializer)
+          end
 
-        if config.array
-          documentation[:type] = :array
-          documentation[:items] = { '$ref': "#/components/schemas/#{ref_identifier}" }
-        elsif documentation[:nullable]
-          documentation[:oneOf] = [
-            { '$ref': "#/components/schemas/#{ref_identifier}" },
-            { type: :null }
-          ]
+          if config.array
+            documentation[:type] = :array
+            documentation[:items] = {
+              oneOf: ref_identifiers.map do |ref_identifier|
+                { '$ref': "#/components/schemas/#{ref_identifier}" }
+              end
+            }
+          elsif documentation[:nullable]
+            documentation[:oneOf] = ref_identifiers.map do |ref_identifier|
+              { '$ref': "#/components/schemas/#{ref_identifier}" }
+            end + [
+              { type: :null }
+            ]
+          else
+            documentation[:oneOf] = ref_identifiers.map do |ref_identifier|
+              { '$ref': "#/components/schemas/#{ref_identifier}" }
+            end
+          end
         else
-          documentation[:$ref] = "#/components/schemas/#{ref_identifier}"
+          ref_identifier = config.documentation[:ref_override].presence || self.class.identifier_for(config[:serializer])
+
+          if config.array
+            documentation[:type] = :array
+            documentation[:items] = { '$ref': "#/components/schemas/#{ref_identifier}" }
+          elsif documentation[:nullable]
+            documentation[:oneOf] = [
+              { '$ref': "#/components/schemas/#{ref_identifier}" },
+              { type: :null }
+            ]
+          else
+            documentation[:$ref] = "#/components/schemas/#{ref_identifier}"
+          end
         end
 
         [attr_name, config.group, documentation]
