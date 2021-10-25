@@ -252,13 +252,13 @@ module LightweightSerializer
     end
 
     def options_for_nested_serializer(attribute_config)
-      allowed_options = serializer_classes(attribute_config.serializer).
-        map { |serializer| serializer.__lws_allowed_options.to_a }.
-        flatten
+      allowed_options = serializer_classes(attribute_config.serializer)
+        .map { |serializer| serializer.__lws_allowed_options.to_a }
+        .flatten
 
-      options.
-        slice(*allowed_options).
-        merge(skip_root: true)
+      options
+        .slice(*allowed_options)
+        .merge(skip_root: true)
     end
 
     def block_or_attribute_from_object(object, attribute_config)
