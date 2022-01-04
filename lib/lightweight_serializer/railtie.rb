@@ -6,6 +6,8 @@ module LightweightSerializer
 
     initializer 'lightweight_serializers.action_controller' do
       ActionController::Renderers.add :json do |object, options|
+        options[:no_serializer] = true if controller_path.split('/')[0] == 'doorkeeper'
+
         if options[:serializer].blank? && !options[:no_serializer]
           raise ArgumentError,
                 'You must provide a Serializer class to render JSON or use no_serializer: true option'
