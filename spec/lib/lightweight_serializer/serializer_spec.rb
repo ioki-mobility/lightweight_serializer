@@ -1,5 +1,4 @@
-require 'rails_helper'
-require './lib/lightweight_serializer'
+require 'spec_helper'
 
 RSpec.describe LightweightSerializer::Serializer do
   before do
@@ -277,7 +276,7 @@ RSpec.describe LightweightSerializer::Serializer do
         end
 
         it 'does not serialize attributes with a condition when the condition is not passed as an option' do
-          serializer = DrinkSerializer.new(drink_model, {})
+          serializer = DrinkSerializer.new(drink_model)
           expect(serializer.as_json[:data]).not_to have_key(:serving_size)
         end
 
@@ -348,8 +347,8 @@ RSpec.describe LightweightSerializer::Serializer do
       end
 
       it 'preserves the order of the elements' do
-        expect(person_serializer.as_json[:data][:addresses].first).to eq(AddressSerializer.new(address_2_model, skip_root: true).as_json)
-        expect(person_serializer.as_json[:data][:addresses].second).to eq(AddressSerializer.new(address_1_model, skip_root: true).as_json)
+        expect(person_serializer.as_json[:data][:addresses][0]).to eq(AddressSerializer.new(address_2_model, skip_root: true).as_json)
+        expect(person_serializer.as_json[:data][:addresses][1]).to eq(AddressSerializer.new(address_1_model, skip_root: true).as_json)
       end
 
       it 'uses the block instead of accessing the attribute' do
@@ -380,9 +379,9 @@ RSpec.describe LightweightSerializer::Serializer do
         let(:fridge_serializer) { FridgeSerializer.new(fridge) }
 
         it 'uses a different serializer for each array item based on the type of array element' do
-          expect(fridge_serializer.as_json[:data][:drinks].first).to eq(UnbrandedDrinkSerializer.new(drink1, skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks].second).to eq(DrinkSerializer.new(drink2, skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks].third).to eq(HeatedDrinkSerializer.new(drink3, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(UnbrandedDrinkSerializer.new(drink1, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][1]).to eq(DrinkSerializer.new(drink2, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(drink3, skip_root: true).as_json)
         end
       end
     end
@@ -445,7 +444,6 @@ RSpec.describe LightweightSerializer::Serializer do
   describe '#to_json' do
     it 'returns a JSON string' do
       expect(person_serializer.to_json).to be_kind_of(String)
-      expect(person_serializer.to_json).to eq(person_serializer.as_json.to_json)
     end
   end
 

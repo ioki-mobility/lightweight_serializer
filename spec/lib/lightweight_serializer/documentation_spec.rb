@@ -1,5 +1,4 @@
-require 'rails_helper'
-require './lib/lightweight_serializer'
+require 'spec_helper'
 
 RSpec.describe LightweightSerializer::Documentation do
   before do
@@ -326,8 +325,8 @@ RSpec.describe LightweightSerializer::Documentation do
 
       it 'generates a oneOf-array with reference and null' do
         expect(subject[:properties][:nested_nullable][:oneOf]).to be_kind_of(Array)
-        expect(subject[:properties][:nested_nullable][:oneOf].first[:$ref]).to eq('#/components/schemas/test--without_type')
-        expect(subject[:properties][:nested_nullable][:oneOf].second[:type]).to eq(:null)
+        expect(subject[:properties][:nested_nullable][:oneOf][0][:$ref]).to eq('#/components/schemas/test--without_type')
+        expect(subject[:properties][:nested_nullable][:oneOf][1][:type]).to eq(:null)
       end
     end
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'set'
+require 'active_record'
 
 module LightweightSerializer
   class Serializer
@@ -156,7 +157,7 @@ module LightweightSerializer
       @options = options
     end
 
-    def as_json
+    def as_json(*args)
       result = if @object_or_collection.nil?
                  nil
                elsif @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)

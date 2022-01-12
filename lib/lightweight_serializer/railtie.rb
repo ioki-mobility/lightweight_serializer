@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require 'rails'
+
 module LightweightSerializer
-  class Railtie < Rails::Railtie
+  class Railtie < ::Rails::Railtie
     config.eager_load_namespaces << LightweightSerializer
 
     initializer 'lightweight_serializers.action_controller' do
