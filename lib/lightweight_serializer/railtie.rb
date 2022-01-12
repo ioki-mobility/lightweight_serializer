@@ -4,10 +4,9 @@ require 'rails'
 
 module LightweightSerializer
   class Railtie < ::Rails::Railtie
-    config.eager_load_namespaces << LightweightSerializer
-
     initializer 'lightweight_serializers.action_controller' do
       ActionController::Renderers.add :json do |object, options|
+        # TODO: Remove this
         options[:no_serializer] = true if controller_path.split('/')[0] == 'doorkeeper'
 
         if options[:serializer].blank? && !options[:no_serializer]
