@@ -150,8 +150,9 @@ RSpec.describe LightweightSerializer::Documentation do
   end
 
   describe '#openapi_schema' do
-    let(:serializer) { TestSerializerWithType }
     subject { described_class.new(serializer).openapi_schema }
+
+    let(:serializer) { TestSerializerWithType }
 
     describe 'general object structure' do
       it 'generates an object as the base element' do

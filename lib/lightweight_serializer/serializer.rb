@@ -157,7 +157,7 @@ module LightweightSerializer
       @options = options
     end
 
-    def as_json(*args)
+    def as_json(*_args)
       result = if @object_or_collection.nil?
                  nil
                elsif @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)

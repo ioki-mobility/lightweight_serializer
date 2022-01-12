@@ -46,7 +46,8 @@ RSpec.describe LightweightSerializer::Serializer do
     end
 
     drink_model_class = Struct.new(:brand, :name, :serving_size, keyword_init: true)
-    heated_drink_model_class = Struct.new(:brand, :name, :serving_size, :optimal_drinking_temperature, keyword_init: true)
+    heated_drink_model_class = Struct.new(:brand, :name, :serving_size, :optimal_drinking_temperature,
+                                          keyword_init: true)
     unbranded_drink_model_class = Struct.new(:name, :serving_size, keyword_init: true)
 
     fridge_serializer_class = Class.new(LightweightSerializer::Serializer) do
@@ -134,7 +135,10 @@ RSpec.describe LightweightSerializer::Serializer do
   end
 
   let(:drink_model) { DrinkModel.new(brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml') }
-  let(:person_model) { OpenStruct.new(first_name: 'John', middle_name: 'Eric', last_name: 'Doe', phone_number: '16465551234', addresses: [address_2_model, address_1_model], favorite_drink: drink_model, errors: []) }
+  let(:person_model) do
+    OpenStruct.new(first_name: 'John', middle_name: 'Eric', last_name: 'Doe', phone_number: '16465551234',
+                   addresses: [address_2_model, address_1_model], favorite_drink: drink_model, errors: [])
+  end
   let(:address_1_model) { OpenStruct.new(type: :office, street: 'Main Boulevard', number: 1337, city: 'Foozen') }
   let(:address_2_model) { OpenStruct.new(type: :private, street: 'Side Street', number: 42, city: 'Foozen') }
   let(:error_model) { OpenStruct.new(message: 'Something went wrong') }
@@ -144,22 +148,11 @@ RSpec.describe LightweightSerializer::Serializer do
   let(:error_serializer) { ErrorSerializer.new(error_model) }
 
   let(:expected_person_attributes) do
-    [
-      :phone_number,
-      :detailed_name,
-      :addresses,
-      :favorite_drink,
-      :errors,
-      :type
-    ]
+    [:phone_number, :detailed_name, :addresses, :favorite_drink, :errors, :type]
   end
 
   let(:detailed_name_attributes) do
-    [
-      :first_name,
-      :middle_name,
-      :last_name
-    ]
+    [:first_name, :middle_name, :last_name]
   end
 
   describe 'attributes' do
@@ -318,9 +311,12 @@ RSpec.describe LightweightSerializer::Serializer do
       it 'passes options down to the nested objects' do
         serializer = PersonSerializer.new(person_model, show_serving_size: true, look_up_zip_for_city: true)
 
-        expect(AddressSerializer).to receive(:new).with(address_2_model, skip_root: true, look_up_zip_for_city: true).and_call_original
-        expect(AddressSerializer).to receive(:new).with(address_1_model, skip_root: true, look_up_zip_for_city: true).and_call_original
-        expect(DrinkSerializer).to receive(:new).with(drink_model, skip_root: true, show_serving_size: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_2_model, skip_root:            true,
+                                                                         look_up_zip_for_city: true).and_call_original
+        expect(AddressSerializer).to receive(:new).with(address_1_model, skip_root:            true,
+                                                                         look_up_zip_for_city: true).and_call_original
+        expect(DrinkSerializer).to receive(:new).with(drink_model, skip_root:         true,
+                                                                   show_serving_size: true).and_call_original
 
         serializer.as_json
       end
@@ -347,8 +343,10 @@ RSpec.describe LightweightSerializer::Serializer do
       end
 
       it 'preserves the order of the elements' do
-        expect(person_serializer.as_json[:data][:addresses][0]).to eq(AddressSerializer.new(address_2_model, skip_root: true).as_json)
-        expect(person_serializer.as_json[:data][:addresses][1]).to eq(AddressSerializer.new(address_1_model, skip_root: true).as_json)
+        expect(person_serializer.as_json[:data][:addresses][0]).to eq(AddressSerializer.new(address_2_model,
+                                                                                            skip_root: true).as_json)
+        expect(person_serializer.as_json[:data][:addresses][1]).to eq(AddressSerializer.new(address_1_model,
+                                                                                            skip_root: true).as_json)
       end
 
       it 'uses the block instead of accessing the attribute' do
@@ -379,9 +377,12 @@ RSpec.describe LightweightSerializer::Serializer do
         let(:fridge_serializer) { FridgeSerializer.new(fridge) }
 
         it 'uses a different serializer for each array item based on the type of array element' do
-          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(UnbrandedDrinkSerializer.new(drink1, skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks][1]).to eq(DrinkSerializer.new(drink2, skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(drink3, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(UnbrandedDrinkSerializer.new(drink1,
+                                                                                                  skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][1]).to eq(DrinkSerializer.new(drink2,
+                                                                                         skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(drink3,
+                                                                                               skip_root: true).as_json)
         end
       end
     end

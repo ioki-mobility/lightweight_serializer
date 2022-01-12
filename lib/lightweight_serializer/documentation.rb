@@ -7,40 +7,10 @@ module LightweightSerializer
     TYPE_FIELD_DESCRIPTION = 'A string identifying the type of the serialized object'
 
     ALLOWED_SCHEMA_ATTRIBUTES = [
-      :title,
-      :multipleOf,
-      :maximum,
-      :exclusiveMaximum,
-      :minimum,
-      :exclusiveMinimum,
-      :maxLength,
-      :minLength,
-      :pattern,
-      :maxItems,
-      :minItems,
-      :uniqueItems,
-      :maxProperties,
-      :minProperties,
-      :required,
-      :enum,
-      :type,
-      :allOf,
-      :oneOf,
-      :anyOf,
-      :not,
-      :items,
-      :properties,
-      :additionalProperties,
-      :description,
-      :format,
-      :default,
-      :nullable,
-      :readOnly,
-      :writeOnly,
-      :xml,
-      :externalDocs,
-      :example,
-      :deprecated
+      :title, :multipleOf, :maximum, :exclusiveMaximum, :minimum, :exclusiveMinimum, :maxLength, :minLength,
+      :pattern, :maxItems, :minItems, :uniqueItems, :maxProperties, :minProperties, :required, :enum, :type,
+      :allOf, :oneOf, :anyOf, :not, :items, :properties, :additionalProperties, :description, :format, :default,
+      :nullable, :readOnly, :writeOnly, :xml, :externalDocs, :example, :deprecated
     ].freeze
 
     def initialize(serializer_class)
@@ -106,8 +76,6 @@ module LightweightSerializer
         serializer.__lws_serialized_class.name.underscore
       elsif serializer.__lws_serialized_class.present? && serializer.__lws_serialized_class.is_a?(String)
         serializer.__lws_serialized_class.underscore
-      else
-        nil
       end
     end
 
@@ -175,9 +143,7 @@ module LightweightSerializer
           result[:type] << :null
         end
 
-        if result[:nullable] && result[:enum].is_a?(Array)
-          result[:enum] << nil
-        end
+        result[:enum] << nil if result[:nullable] && result[:enum].is_a?(Array)
       end
     end
   end
