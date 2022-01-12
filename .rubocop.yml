@@ -1,13 +1,567 @@
+require:
+  - rubocop-rspec
+
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 2.7
+  SuggestExtensions: false
 
-Style/StringLiterals:
-  Enabled: true
-  EnforcedStyle: double_quotes
+########## MISC
+Style/Documentation:
+  Enabled: false
 
-Style/StringLiteralsInInterpolation:
+Bundler/OrderedGems:
+  Enabled: false
+
+Security/IoMethods: # new in 1.22
   Enabled: true
-  EnforcedStyle: double_quotes
+
+########## NAMING RELATED
+# Renaming `has_something?` to `something?` obfuscates whether it is a "is-a" or
+# a "has-a" relationship.
+Naming/PredicateName:
+  Enabled: false
+
+Naming/MethodParameterName:
+  Enabled: false
+
+########## LAYOUT RELATED
+Layout/AccessModifierIndentation:
+  Enabled: true
+
+Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Layout/DotPosition:
+  EnforcedStyle: leading
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/HashAlignment:
+  EnforcedColonStyle: table
+  EnforcedHashRocketStyle: table
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
 
 Layout/LineLength:
+  AutoCorrect: false
   Max: 120
+  IgnoredPatterns: ['\A\s*#']
+  Exclude:
+    - "**/*_spec.rb"
+
+Layout/BeginEndAlignment:
+  Enabled: true
+
+Layout/EmptyLinesAroundAttributeAccessor:
+  Enabled: true
+
+Layout/SpaceAroundMethodCallOperator:
+  Enabled: true
+
+########## STYLE RELATED
+Style/EmptyElse:
+  EnforcedStyle: empty
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always
+  Exclude:
+    - 'spec/**/*'
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/NumericPredicate:
+  EnforcedStyle: comparison
+
+Style/ZeroLengthPredicate:
+  Enabled: false
+
+Style/NegatedIf:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+Style/MultilineTernaryOperator:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/SingleLineBlockParams:
+  Enabled: false
+
+Style/RedundantCondition:
+  Enabled: false
+
+Style/TrailingUnderscoreVariable:
+  Enabled: false
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+Style/AsciiComments:
+  Enabled: false
+
+Style/RedundantReturn:
+  Enabled: false
+
+Style/HashConversion: # (new in 1.10)
+  Enabled: true
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
+
+Style/TernaryParentheses:
+  EnforcedStyle: require_parentheses_when_complex
+
+Style/FloatDivision:
+  Enabled: false
+
+Style/CommentAnnotation:
+  Enabled: true
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/NumberedParameters: # new in 1.22
+  Enabled: true
+
+Style/NumberedParametersLimit: # new in 1.22
+  Enabled: true
+
+Style/OpenStructUse: # new in 1.23
+  Enabled: true
+  Exclude:
+    - 'spec/**/*'
+
+Style/SelectByRegexp: # new in 1.22
+  Enabled: true
+
+Lint/EmptyWhen:
+  Enabled: false
+
+Lint/RaiseException:
+  Enabled: true
+
+Lint/RequireRelativeSelfPath: # new in 1.22
+  Enabled: true
+
+Lint/StructNewOverride:
+  Enabled: true
+
+Lint/BinaryOperatorWithIdenticalOperands:
+  Enabled: true
+
+Lint/ConstantDefinitionInBlock:
+  Enabled: true
+
+Lint/DeprecatedOpenSSLConstant:
+  Enabled: true
+
+Lint/DuplicateElsifCondition:
+  Enabled: false
+
+Lint/DuplicateRequire:
+  Enabled: false
+
+Lint/DuplicateRescueException:
+  Enabled: false
+
+Lint/EmptyConditionalBody:
+  Enabled: false
+
+Lint/EmptyFile:
+  Enabled: false
+
+Lint/FloatComparison:
+  Enabled: false
+
+Lint/HashCompareByIdentity:
+  Enabled: false
+
+Lint/IdentityComparison:
+  Enabled: false
+
+Lint/MissingSuper:
+  Enabled: false
+
+Lint/MixedRegexpCaptureTypes:
+  Enabled: false
+
+Lint/NumberedParameterAssignment: # (new in 1.9)
+  Enabled: true
+
+Lint/OrAssignmentToConstant: # (new in 1.9)
+  Enabled: true
+
+Lint/OutOfRangeRegexpRef:
+  Enabled: false
+
+Lint/RedundantSafeNavigation:
+  Enabled: false
+
+Lint/SelfAssignment:
+  Enabled: false
+
+Lint/SymbolConversion: # (new in 1.9)
+  Enabled: true
+
+Lint/TopLevelReturnWithArgument:
+  Enabled: false
+
+Lint/TrailingCommaInAttributeDeclaration:
+  Enabled: false
+
+Lint/TripleQuotes: # (new in 1.9)
+  Enabled: true
+
+Lint/UnreachableLoop:
+  Enabled: false
+
+Lint/UselessMethodDefinition:
+  Enabled: false
+
+Lint/UselessRuby2Keywords: # new in 1.23
+  Enabled: true
+
+Lint/UselessTimes:
+  Enabled: false
+
+# Disabled as a suggestion from https://github.com/rubocop-hq/rubocop/issues/4222
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - "spec/**/*.rb"
+
+Style/AccessorGrouping:
+  Enabled: false
+
+Style/BisectedAttrAccessor:
+  Enabled: false
+
+Style/CaseLikeIf:
+  Enabled: false
+
+Style/ClassEqualityComparison:
+  Enabled: false
+
+Style/CombinableLoops:
+  Enabled: false
+
+Style/ExplicitBlockArgument:
+  Enabled: false
+
+Style/ExponentialNotation:
+  Enabled: false
+
+Style/GlobalStdStream:
+  Enabled: false
+
+Style/HashAsLastArrayItem:
+  Enabled: false
+
+Style/HashLikeCase:
+  Enabled: false
+
+Style/IfWithBooleanLiteralBranches: # (new in 1.9)
+  Enabled: true
+
+Style/KeywordParametersOrder:
+  Enabled: false
+
+Style/OptionalBooleanParameter:
+  Enabled: false
+
+Style/RedundantAssignment:
+  Enabled: false
+
+Style/RedundantFetchBlock:
+  Enabled: false
+
+Style/RedundantFileExtensionInRequire:
+  Enabled: false
+
+Style/RedundantRegexpCharacterClass:
+  Enabled: false
+
+Style/RedundantRegexpEscape:
+  Enabled: false
+
+Style/RedundantSelfAssignment:
+  Enabled: false
+
+Style/SingleArgumentDig:
+  Enabled: false
+
+Style/SlicingWithRange:
+  Enabled: false
+
+Style/SoleNestedConditional:
+  Enabled: false
+
+Style/StringConcatenation:
+  Enabled: false
+
+########## METRICS RELATED
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+# When running rubocop with autocorrect (-a)
+# this changes our tests for failing operations
+#   it { is_expected.to fail.with_error(:foobar) }
+# to
+#   it { is_expected.to raise.with_error(:foobar) }
+#
+# which of course does not work ...
+Style/SignalException:
+  Exclude:
+    - "**/*_spec.rb"
+
+Style/FormatString:
+  Enabled: true
+Style/FormatStringToken:
+  Enabled: false
+
+# Added when merging 1.4
+Lint/DuplicateBranch: # (new in 1.3)
+  Enabled: true
+Lint/DuplicateRegexpCharacterClassElement: # (new in 1.1)
+  Enabled: true
+Lint/EmptyBlock: # (new in 1.1)
+  Enabled: true
+  Exclude:
+    - "**/*_spec.rb"
+Lint/EmptyClass: # (new in 1.3)
+  Enabled: true
+Lint/NoReturnInBeginEndBlocks: # (new in 1.2)
+  Enabled: true
+Lint/ToEnumArguments: # (new in 1.1)
+  Enabled: true
+Lint/UnexpectedBlockArity: # (new in 1.5)
+  Enabled: true
+Lint/UnmodifiedReduceAccumulator: # (new in 1.1)
+  Enabled: true
+
+Style/ArgumentsForwarding: # (new in 1.1)
+  Enabled: true
+Style/CollectionCompact: # (new in 1.2)
+  Enabled: true
+Style/DocumentDynamicEvalDefinition: # (new in 1.1)
+  Enabled: true
+Style/NegatedIfElseCondition: # (new in 1.2)
+  Enabled: true
+Style/NilLambda: # (new in 1.3)
+  Enabled: true
+Style/RedundantArgument: # (new in 1.4)
+  Enabled: false
+Style/SwapValues: # (new in 1.1)
+  Enabled: true
+
+Layout/SpaceBeforeBrackets: # (new in 1.7)
+  # We are using a lot of method calls without parentheses and use an array as an argument.
+  # Those calls would be broken
+  Enabled: false
+Lint/AmbiguousAssignment: # (new in 1.7)
+  Enabled: true
+Style/HashExcept: # (new in 1.7)
+  # Ruby 3.0.0 adds Hash#except, all ActiveSupport methods like Hash#reject, etc can be replaced with this native
+  # function, once we switch to Ruby 3.0.0. We can enable this cop when we upgrade.
+  # See: https://www.rubydoc.info/gems/rubocop/RuboCop/Cop/Style/HashExcept
+  Enabled: false
+
+
+Lint/DeprecatedConstants: # (new in 1.8)
+  Enabled: true
+Lint/LambdaWithoutLiteralBlock: # (new in 1.8)
+  Enabled: true
+Lint/RedundantDirGlobSort: # (new in 1.8)
+  Enabled: true
+Style/EndlessMethod: # (new in 1.8)
+  Enabled: true
+
+Naming/VariableNumber:
+  Enabled: false
+
+Gemspec/DateAssignment: # (new in 1.10)
+  Enabled: true
+
+Gemspec/RequireMFA: # new in 1.23
+  Enabled: true
+
+Style/StringChars: # (new in 1.12)
+  Enabled: true
+
+Lint/EmptyInPattern: # (new in 1.16)
+  Enabled: true
+
+Style/InPatternThen: # (new in 1.16)
+  Enabled: true
+
+Style/MultilineInPatternThen: # (new in 1.16)
+  Enabled: true
+
+Style/QuotedSymbols: # (new in 1.16)
+  Enabled: true
+
+Layout/LineEndStringConcatenationIndentation: # (new in 1.18)
+  Enabled: true
+
+Naming/InclusiveLanguage: # (new in 1.18)
+  Enabled: false
+  Severity: info
+
+Lint/AmbiguousRange: # (new in 1.19)
+  Enabled: true
+
+Style/RedundantSelfAssignmentBranch: # (new in 1.19)
+  Enabled: true
+
+Lint/AmbiguousOperatorPrecedence: # new in 1.21
+  Enabled: true
+
+Lint/IncompatibleIoSelectWithFiberScheduler: # new in 1.21
+  Enabled: true
+
+Naming/BlockForwarding: # new in 1.24
+  Enabled: true
+
+Style/FileRead: # new in 1.24
+  Enabled: true
+
+Style/FileWrite: # new in 1.24
+  Enabled: true
+
+Style/MapToHash: # new in 1.24
+  Enabled: true
+
+# -----------------------------------------------------------------------------
+# RuboCop RSpec Config
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/Be:
+  Enabled: true
+
+RSpec/BeEql:
+  Enabled: false
+
+RSpec/BeforeAfterAll:
+  Enabled: true
+
+RSpec/Capybara/VisibilityMatcher:
+  Enabled: true
+
+RSpec/ContextMethod:
+  Enabled: true
+
+RSpec/ContextWording:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Enabled: true
+
+RSpec/DescribedClass:
+  Enabled: true
+
+RSpec/EmptyHook:
+  Enabled: true
+
+RSpec/EmptyLineAfterExampleGroup:
+  Enabled: true
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/ExampleWording:
+  Enabled: true
+
+RSpec/ExpectChange:
+  Enabled: true
+
+RSpec/InstanceVariable:
+  Enabled: true
+
+RSpec/MessageSpies:
+  Enabled: true
+  EnforcedStyle: receive
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/ReceiveCounts:
+  Enabled: true
+
+RSpec/RepeatedExample:
+  Enabled: true
+
+RSpec/RepeatedDescription:
+  Enabled: true
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/VariableName:
+  EnforcedStyle: snake_case
+
+RSpec/VoidExpect:
+  Enabled: true
+
+RSpec/IdenticalEqualityAssertion: # (new in 2.4)
+  Enabled: true
+
+RSpec/Rails/AvoidSetupHook: # (new in 2.4)
+  Enabled: true
+
+RSpec/ExcessiveDocstringSpacing: # new in 2.5
+  Enabled: true
+
+RSpec/SubjectDeclaration: # new in 2.5
+  Enabled: true
+
+RSpec/FactoryBot/SyntaxMethods: # new in 2.7
+  Enabled: false
