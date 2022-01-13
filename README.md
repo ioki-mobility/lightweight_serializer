@@ -1,8 +1,11 @@
 # LightweightSerializer
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/lightweight_serializer`. To experiment with that code, run `bin/console` for an interactive prompt.
+LightweightSerializer is a gem that allows you to write serializers for your API, to define your JSON models. It is highly
+opinionated, and tries to use as little magic as possible, but instead requires you to explicitly write what you want to
+do.
 
-TODO: Delete this and the text above, and describe your gem
+As an addition, this gem also provides easy ways to generate [OpenAPI 3](https://swagger.io/specification/) compatible
+specification for your API endpoints.
 
 ## Installation
 
@@ -16,13 +19,27 @@ And then execute:
 
     $ bundle install
 
-Or install it yourself as:
-
-    $ gem install lightweight_serializer
-
 ## Usage
 
-TODO: Write usage instructions here
+To create a serializer, create a new file in your `app/serializers/` folder. Let's assume we have a nice blog:
+
+```ruby
+class PostSerializer < LightweightSerializer::Serializer
+  attribute :title
+  attribute :content
+
+  collection :comments, serializer: CommentSerializer
+
+  nested :author, serializer: UserSerializer
+end
+
+class CommentSerializer < LightweightSerializer::Serializer
+  attribute :content
+  attribute :name do |object|
+    object.first_name + " " + object.last_name
+  end
+end
+```
 
 ## Development
 
@@ -32,7 +49,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/lightweight_serializer.
+Bug reports and pull requests are welcome on GitHub at https://github.com/ioki-mobility/lightweight_serializer.
 
 ## License
 
