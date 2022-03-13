@@ -22,7 +22,7 @@ module LightweightSerializer
           ActiveSupport::JSON.encode(object)
         else
           filtered_options = options.slice(*(serializer_class.__lws_allowed_options + [:skip_root, :meta]))
-          serializer_class.new(object, filtered_options).to_json
+          serializer_class.new(object, **filtered_options).to_json
         end
       end
     end
