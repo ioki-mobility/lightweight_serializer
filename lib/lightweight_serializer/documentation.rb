@@ -25,10 +25,15 @@ module LightweightSerializer
       @identifier ||= self.class.identifier_for(serializer)
     end
 
+    def display_title
+      @display_title ||= serializer.name&.gsub(/Serializer/, '')
+    end
+
     def openapi_schema
       result = {
         type:       'object',
-        properties: base_properties_hash
+        properties: base_properties_hash,
+        title: display_title
       }
 
       defintions = attribute_definitions + nested_definitions

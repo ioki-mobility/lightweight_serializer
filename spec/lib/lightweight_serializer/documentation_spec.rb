@@ -157,7 +157,11 @@ RSpec.describe LightweightSerializer::Documentation do
     describe 'general object structure' do
       it 'generates an object as the base element' do
         expect(subject).to be_kind_of(Hash)
-        expect(subject.keys).to match_array([:type, :properties])
+        expect(subject.keys).to match_array([:type, :properties, :title])
+      end
+
+      it 'generates a title' do
+        expect(subject[:title]).to eq(serializer.name.gsub(/Serializer/, ''))
       end
 
       it 'generates an entry in the properties hash for each defined attribute' do
