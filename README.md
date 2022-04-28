@@ -1,4 +1,4 @@
-# LightweightSerializer
+# LightweightSerializer [![CI Status](https://github.com/ioki-mobility/lightweight_serializer/actions/workflows/main.yml/badge.svg)](https://github.com/ioki-mobility/lightweight_serializer/actions/workflows/main.yml)
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/lightweight_serializer`. To experiment with that code, run `bin/console` for an interactive prompt.
 
