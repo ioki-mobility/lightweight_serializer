@@ -33,7 +33,7 @@ module LightweightSerializer
       result = {
         type:       'object',
         properties: base_properties_hash,
-        title: display_title
+        title:      display_title
       }
 
       defintions = attribute_definitions + nested_definitions
