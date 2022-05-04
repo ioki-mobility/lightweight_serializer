@@ -109,6 +109,8 @@ RSpec.describe LightweightSerializer::Serializer do
       serializes model: 'SuperDuperTestModel'
     end
 
+    inherited_super_duper_test_serializer_without_type_class = Class.new(super_duper_test_serializer_without_type_class)
+
     stub_const('AddressSerializer', address_serializer_class)
     stub_const('PersonSerializer', person_serializer_class)
     stub_const('ErrorSerializer', error_serializer_class)
@@ -131,6 +133,7 @@ RSpec.describe LightweightSerializer::Serializer do
     stub_const('SuperDuperTestSerializer', super_duper_test_serializer_class)
     stub_const('InheritedSuperDuperTestSerializer', inherited_super_duper_test_serializer_class)
     stub_const('SuperDuperTestSerializerWithoutTypeField', super_duper_test_serializer_without_type_class)
+    stub_const('InheritedSuperDuperTestSerializerWithoutTypeField', inherited_super_duper_test_serializer_without_type_class)
     stub_const('SomeTestModel', test_model_class)
   end
 
@@ -413,6 +416,11 @@ RSpec.describe LightweightSerializer::Serializer do
     context 'type field generation' do
       it 'does not generate a type field, when no_automatic_type_field! is used' do
         serializer = SuperDuperTestSerializerWithoutTypeField.new(SomeTestModel.new)
+        expect(serializer.as_json[:data]).not_to have_key(:type)
+      end
+
+      it 'does not generate a type field on inherited classes when no_automatic_type_field! is used on the parent' do
+        serializer = InheritedSuperDuperTestSerializerWithoutTypeField.new(SomeTestModel.new)
         expect(serializer.as_json[:data]).not_to have_key(:type)
       end
 

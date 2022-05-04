@@ -13,6 +13,7 @@ module LightweightSerializer
       base.__lws_serialized_type = __lws_serialized_type.dup
       base.__lws_serialized_class = __lws_serialized_class.dup
       base.__lws_allowed_options = __lws_allowed_options.deep_dup || Set.new
+      base.__lws_skip_automatic_type_field = !!__lws_skip_automatic_type_field
       super
     end
 
@@ -112,6 +113,7 @@ module LightweightSerializer
 
       attr_writer :__lws_defined_attributes,
                   :__lws_defined_nested_serializers,
+                  :__lws_skip_automatic_type_field,
                   :__lws_allowed_options,
                   :__lws_serialized_type,
                   :__lws_serialized_class
