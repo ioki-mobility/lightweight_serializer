@@ -2,6 +2,7 @@
 
 require 'set'
 require 'active_record'
+require 'active_model'
 
 module LightweightSerializer
   class Serializer
@@ -162,7 +163,9 @@ module LightweightSerializer
     def as_json(*_args)
       result = if @object_or_collection.nil?
                  nil
-               elsif @object_or_collection.is_a?(Array) || @object_or_collection.is_a?(ActiveRecord::Relation)
+               elsif @object_or_collection.is_a?(Array) ||
+                     @object_or_collection.is_a?(ActiveRecord::Relation) ||
+                     @object_or_collection.is_a?(ActiveModel::Errors)
                  @object_or_collection.map do |object|
                    serialized_object(object).tap do |hash|
                      hash[:type] = type_data(object) unless self.class.__lws_skip_automatic_type_field

@@ -413,6 +413,19 @@ RSpec.describe LightweightSerializer::Serializer do
       end
     end
 
+    describe 'when called with ActiveModel:Errors' do
+      let(:errors) do
+        ActiveModel::Errors.new(Class.new).tap do |errors|
+          errors.add(:base, 'Something went wrong')
+        end
+      end
+      let(:error_serializer) { ErrorSerializer.new(errors) }
+
+      it 'returns a hash with a data root and an array of elements' do
+        expect(error_serializer.as_json).to be_kind_of(Array)
+      end
+    end
+
     context 'type field generation' do
       it 'does not generate a type field, when no_automatic_type_field! is used' do
         serializer = SuperDuperTestSerializerWithoutTypeField.new(SomeTestModel.new)
