@@ -413,14 +413,13 @@ RSpec.describe LightweightSerializer::Serializer do
       end
     end
 
-    context 'when called as_json with a DateTime object' do
+    context 'when called as_json with a DateTime object', focus: true do
       let(:my_date) { DateTime.now }
       let(:date_object) { OpenStruct.new(my_date: my_date) }
       let(:serializer) do
         Class.new(LightweightSerializer::Serializer) do
           attribute :my_date,
-                    format:       'date-time'
-
+                    format: 'date-time'
         end
       end
 
@@ -428,7 +427,7 @@ RSpec.describe LightweightSerializer::Serializer do
         {
           data: {
             my_date: my_date.iso8601,
-            type: "open_struct"
+            type:    'open_struct'
           }
         }
       end
