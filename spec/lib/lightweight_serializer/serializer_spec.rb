@@ -413,6 +413,31 @@ RSpec.describe LightweightSerializer::Serializer do
       end
     end
 
+    context 'when called as_json with a DateTime object' do
+      let(:my_date) { DateTime.now }
+      let(:date_object) { OpenStruct.new(my_date: my_date) }
+      let(:serializer) do
+        Class.new(LightweightSerializer::Serializer) do
+          attribute :my_date,
+                    format:       'date-time'
+
+        end
+      end
+
+      let(:expected_result) do
+        {
+          data: {
+            my_date: my_date.iso8601,
+            type: "open_struct"
+          }
+        }
+      end
+
+      it 'expects serialized date to be iso8061' do
+        expect(serializer.new(date_object).as_json).to eq(expected_result)
+      end
+    end
+
     describe 'when called with ActiveModel:Errors' do
       let(:errors) do
         ActiveModel::Errors.new(Class.new).tap do |errors|
