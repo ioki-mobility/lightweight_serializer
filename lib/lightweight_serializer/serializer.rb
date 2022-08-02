@@ -271,9 +271,9 @@ module LightweightSerializer
       return instance_exec(object, &attribute_config.block) if attribute_config.block
 
       attribute_value = object.public_send(attribute_config.attr_name)
-      return attribute_value unless [Date, DateTime].any? { |klass| attribute_value.instance_of? klass }
+      return attribute_value.iso8601 if attribute_value.respond_to?(:iso8601)
 
-      attribute_value.iso8601
+      attribute_value
     end
 
     def type_data(object)
