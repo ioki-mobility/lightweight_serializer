@@ -3,3 +3,15 @@ AllCops:
 
 inherit_from:
   - https://dbdrive.github.io/triebwerk/rubocop_common.yml
+
+# Custom settings
+Layout/LineLength:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+# TODO: Replace OpenStruct with e.g. Struct.
+Style/OpenStructUse:
+  Enabled: no
+
+RSpec/NestedGroups:
+  Max: 4

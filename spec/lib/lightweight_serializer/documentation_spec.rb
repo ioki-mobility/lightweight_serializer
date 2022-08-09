@@ -241,7 +241,7 @@ RSpec.describe LightweightSerializer::Documentation do
 
       context 'when no information about serialized type is given' do
         let(:serializer) do
-          Class.new(LightweightSerializer::Serializer) {}
+          Class.new(LightweightSerializer::Serializer)
         end
 
         it 'adds a type field' do
