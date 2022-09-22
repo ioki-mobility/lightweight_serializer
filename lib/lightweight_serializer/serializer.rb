@@ -270,6 +270,8 @@ module LightweightSerializer
     def block_or_attribute_from_object(object, attribute_config)
       if attribute_config.block
         instance_exec(object, &attribute_config.block)
+      elsif object.is_a? Hash
+        object.fetch(attribute_config.attr_name)
       else
         object.public_send(attribute_config.attr_name)
       end
