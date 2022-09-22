@@ -11,7 +11,8 @@ module LightweightSerializer
 
         if options[:serializer].blank? && !options[:no_serializer]
           raise ArgumentError,
-                'You must provide a Serializer class to render JSON or use no_serializer: true option'
+                'You must provide a Serializer class to render JSON (e.g. `serializer: PostSerializer`) \
+                or use no_serializer: true option'
         end
 
         self.content_type = Mime[:json]
