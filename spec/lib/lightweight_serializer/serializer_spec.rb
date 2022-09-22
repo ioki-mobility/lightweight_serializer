@@ -138,6 +138,7 @@ RSpec.describe LightweightSerializer::Serializer do
   end
 
   let(:drink_model) { DrinkModel.new(brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml') }
+  let(:drink_hash) { { brand: 'Coca Cola', name: 'Coke Zero', serving_size: '500 ml' } }
   let(:person_model) do
     OpenStruct.new(first_name: 'John', middle_name: 'Eric', last_name: 'Doe', phone_number: '16465551234',
                    addresses: [address_2_model, address_1_model], favorite_drink: drink_model, errors: [])
@@ -410,6 +411,24 @@ RSpec.describe LightweightSerializer::Serializer do
           expect(error_serializer.as_json).to be_kind_of(Array)
           expect(error_serializer.as_json.count).to eq(errors.count)
         end
+      end
+    end
+
+    describe 'when called on a hash' do
+      let(:drink_serializer) { DrinkSerializer.new(drink_hash) }
+      let(:drink_array_serializer) { DrinkSerializer.new([drink_hash, drink_hash]) }
+
+      it 'returns a hash with a data root' do
+        expect(drink_serializer.as_json).to have_key(:data)
+        expect(drink_serializer.as_json[:data]).to eq(
+          { brand: 'Coca Cola', name: 'Coke Zero', type: :drink }
+        )
+      end
+
+      it 'returns an array of elements' do
+        expect(drink_array_serializer.as_json).to have_key(:data)
+        expect(drink_array_serializer.as_json[:data]).to be_kind_of(Array)
+        expect(drink_array_serializer.as_json[:data].count).to eq(2)
       end
     end
 
