@@ -430,6 +430,10 @@ RSpec.describe LightweightSerializer::Serializer do
         expect(drink_array_serializer.as_json[:data]).to be_kind_of(Array)
         expect(drink_array_serializer.as_json[:data].count).to eq(2)
       end
+
+      it 'raises when an attribute is missing' do
+        expect { DrinkSerializer.new({ brand: 'Coca Cola' }).as_json }.to raise_error KeyError
+      end
     end
 
     describe 'when called with ActiveModel:Errors' do

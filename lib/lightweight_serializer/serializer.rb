@@ -271,7 +271,7 @@ module LightweightSerializer
       if attribute_config.block
         instance_exec(object, &attribute_config.block)
       elsif object.is_a? Hash
-        object[attribute_config.attr_name]
+        object.fetch(attribute_config.attr_name)
       else
         object.public_send(attribute_config.attr_name)
       end
