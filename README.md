@@ -448,6 +448,23 @@ Outputs:
 
 Note that `meta` is ignored when the serializer uses `no_root!`.
 
+It is possible to pass additional options to the serializer, which can then be used within it by accessing `options`:
+
+```ruby
+class PostSerializer < LightweightSerializer::Serializer
+  allow_options :current_user
+
+  attribute :author do
+    options[:current_user].email
+  end
+end
+
+current_user = OpenStruct.new(email: "sarah@example.com")
+
+puts PostSerializer.new({}, current_user: current_user).to_json
+# => {"data":{"author":"sarah@example.com","type":"hash"}}
+```
+
 ### Documentation
 
 Use the following to generate the OpenAPI specification for an object represented by a serializer:
