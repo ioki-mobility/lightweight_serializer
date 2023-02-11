@@ -243,7 +243,13 @@ module LightweightSerializer
 
     def serializer_for(serializer_data, model_class)
       if serializer_data.is_a?(Hash)
-        serializer_data[model_class]
+        if serializer_data.key?(model_class)
+          serializer_data[model_class]
+        elsif serializer_data.key?(:fallback)
+          serializer_data[:fallback]
+        else
+          raise ArgumentError, "No Serializer defined for argument of type \"#{model_class}\"."
+        end
       else
         serializer_data
       end
