@@ -192,11 +192,24 @@ The output would be:
 
 `collection` also supports the `group` and `condition` options (cf. `attribute`).
 
-A hash can be provided to `serializer` to serialize arrays of differing object types (make sure to use the actual `Class` as a hash key - strings are not supported):
+When you are intending to pass multiple objects into a subserializer, you can specify a hash in the format
+`{ Class => SerializerClass }` as the `serializer` parameter. For every object that is given to the serializer, the
+correct serializer class is looked up. Note, that this only checks for the exact class, you cannot use a base class
+as the key and expect every subclass to be matched.
+
+If you pass in an object of a type, that is not included in the list, an `ArgumentError` will be raised.
+
+If you intend to have soms sort of generic fallback serializer, that all unmatched objects should be serialized with,
+you can specify a `:fallback` option.
 
 ```ruby
 TechPost = Struct.new(:title, :technology)
 SciencePost = Struct.new(:title, :field)
+Post = Struct.new(:title)
+
+class GenericPostSerializer < LightweightSerializer::Serializer
+  attribute :title
+end
 
 class TechPostSerializer < LightweightSerializer::Serializer
   attribute :title
@@ -211,20 +224,23 @@ end
 class BlogSerializer < LightweightSerializer::Serializer
   collection :posts, serializer: {
     TechPost => TechPostSerializer,
-    SciencePost => SciencePostSerial
+    SciencePost => SciencePostSerial,
+    fallback: GenericPostSerializer
   }
 end
 
 BlogSerializer.new({posts: [
   TechPost.new('Lorem', 'JS'),
-  SciencePost.new('Ipsum', 'SE')
+  SciencePost.new('Ipsum', 'SE'),
+  Post.new("Dolor")
 ]}).as_json
 
 # {
 #   data: {
 #     posts: [
-#       {title: "Lorem", technology: "JS", type: "tech_post"},
-#       {title: "Ipsum", field: "SE", type: "science_post"}
+#       { title: "Lorem", technology: "JS", type: "tech_post" },
+#       { title: "Ipsum", field: "SE", type: "science_post" },
+#       { title: "Dolor" }
 #     ],
 #     type: "hash"
 #   }
@@ -516,8 +532,8 @@ Refer to the [OpenAPI specification](https://spec.openapis.org/oas/latest.html) 
 
 ### Rails
 
-* Put your serializers in `app/serializers/`.
-* Add an `ApplicationSerializer` to share common options:
+-   Put your serializers in `app/serializers/`.
+-   Add an `ApplicationSerializer` to share common options:
 
     ```ruby
     class ApplicationSerializer < LightweightSerializer::Serializer
@@ -526,13 +542,13 @@ Refer to the [OpenAPI specification](https://spec.openapis.org/oas/latest.html) 
     ```
 
     Then inherit from it:
-    
+
     ```ruby
     class PostSerializer < ApplicationSerializer
     end
     ```
 
-* In a controller action, render JSON as follows:
+-   In a controller action, render JSON as follows:
 
     ```ruby
     render json: objects, serializer: PostSerializer`

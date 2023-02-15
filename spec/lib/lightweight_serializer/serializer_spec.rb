@@ -29,6 +29,13 @@ RSpec.describe LightweightSerializer::Serializer do
       end
     end
 
+    generic_serializer = Class.new(LightweightSerializer::Serializer) do
+      serializes type: :object
+
+      attribute :object_id
+      attribute :inspect
+    end
+
     drink_serializer_class = Class.new(LightweightSerializer::Serializer) do
       serializes type: :drink
 
@@ -55,6 +62,15 @@ RSpec.describe LightweightSerializer::Serializer do
         drink_model_class           => drink_serializer_class,
         heated_drink_model_class    => heated_drink_serializer_class,
         unbranded_drink_model_class => unbranded_drink_serializer_class
+      }
+    end
+
+    fridge_with_fallback_serializer_class = Class.new(LightweightSerializer::Serializer) do
+      collection :drinks, serializer: {
+        drink_model_class           => drink_serializer_class,
+        heated_drink_model_class    => heated_drink_serializer_class,
+        unbranded_drink_model_class => unbranded_drink_serializer_class,
+        :fallback                   => generic_serializer
       }
     end
 
@@ -111,6 +127,7 @@ RSpec.describe LightweightSerializer::Serializer do
 
     inherited_super_duper_test_serializer_without_type_class = Class.new(super_duper_test_serializer_without_type_class)
 
+    stub_const('GenericSerializer', generic_serializer)
     stub_const('AddressSerializer', address_serializer_class)
     stub_const('PersonSerializer', person_serializer_class)
     stub_const('ErrorSerializer', error_serializer_class)
@@ -126,6 +143,7 @@ RSpec.describe LightweightSerializer::Serializer do
     stub_const('UnbrandedDrink', unbranded_drink_model_class)
 
     stub_const('FridgeSerializer', fridge_serializer_class)
+    stub_const('FridgeWithFallbackSerializer', fridge_with_fallback_serializer_class)
     stub_const('FridgeModel', fridge_model_class)
 
     stub_const('ErrorSerializerWithPrivateMethod', error_serializer_with_private_method_class)
@@ -387,6 +405,29 @@ RSpec.describe LightweightSerializer::Serializer do
                                                                                          skip_root: true).as_json)
           expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(drink3,
                                                                                                skip_root: true).as_json)
+        end
+      end
+    end
+
+    context 'nested serializer fallback handling' do
+      context 'without a defined fallback' do
+        let(:fridge_serializer) { FridgeSerializer.new(fridge) }
+        let(:fridge) { FridgeModel.new(drinks: ['DrinkString']) }
+
+        it 'raises an ArgumentError, when passing in an object that does not have a serializer defined' do
+          expect do
+            fridge_serializer.as_json
+          end.to raise_error(ArgumentError, 'No Serializer defined for argument of type "String".')
+        end
+      end
+
+      context 'with a defined fallback' do
+        let(:fridge_serializer) { FridgeWithFallbackSerializer.new(fridge) }
+        let(:drink1) { 'DrinkString' }
+        let(:fridge) { FridgeModel.new(drinks: [drink1]) }
+
+        it 'uses the fallback serializer' do
+          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(GenericSerializer.new(drink1, skip_root: true).as_json)
         end
       end
     end
