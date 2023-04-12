@@ -156,8 +156,8 @@ RSpec.describe LightweightSerializer::Documentation do
 
     describe 'general object structure' do
       it 'generates an object as the base element' do
-        expect(subject).to be_kind_of(Hash)
-        expect(subject.keys).to match_array([:type, :properties, :title])
+        expect(subject).to be_a(Hash)
+        expect(subject.keys).to contain_exactly(:type, :properties, :title)
       end
 
       it 'generates a title' do
@@ -176,9 +176,9 @@ RSpec.describe LightweightSerializer::Documentation do
         let(:serializer) { TestSerializer::SerializerWithoutType }
 
         it 'generates an undescribed object for the group' do
-          expect(subject[:properties].keys).to match_array([:unnested_attribute, :details])
+          expect(subject[:properties].keys).to contain_exactly(:unnested_attribute, :details)
           expect(subject[:properties][:details][:type]).to eq('object')
-          expect(subject[:properties][:details][:properties].keys).to match_array([:attr1, :attr2, :user])
+          expect(subject[:properties][:details][:properties].keys).to contain_exactly(:attr1, :attr2, :user)
         end
       end
     end
@@ -211,7 +211,7 @@ RSpec.describe LightweightSerializer::Documentation do
         end
 
         it 'adds a string field with description, example and forces type based on model' do
-          expect(subject[:properties][:type].keys).to match_array([:type, :description, :enum, :example])
+          expect(subject[:properties][:type].keys).to contain_exactly(:type, :description, :enum, :example)
 
           expect(subject[:properties][:type][:type]).to eq(:string)
           expect(subject[:properties][:type][:description]).to eq(described_class::TYPE_FIELD_DESCRIPTION)
@@ -230,7 +230,7 @@ RSpec.describe LightweightSerializer::Documentation do
         end
 
         it 'adds a string field with description, example and forces type based on model' do
-          expect(subject[:properties][:type].keys).to match_array([:type, :description, :enum, :example])
+          expect(subject[:properties][:type].keys).to contain_exactly(:type, :description, :enum, :example)
 
           expect(subject[:properties][:type][:type]).to eq(:string)
           expect(subject[:properties][:type][:description]).to eq(described_class::TYPE_FIELD_DESCRIPTION)
@@ -249,7 +249,7 @@ RSpec.describe LightweightSerializer::Documentation do
         end
 
         it 'adds a string field with description, example and forces type based on model' do
-          expect(subject[:properties][:type].keys).to match_array([:type, :description])
+          expect(subject[:properties][:type].keys).to contain_exactly(:type, :description)
 
           expect(subject[:properties][:type][:type]).to eq(:string)
           expect(subject[:properties][:type][:description]).to eq(described_class::TYPE_FIELD_DESCRIPTION)
@@ -268,8 +268,8 @@ RSpec.describe LightweightSerializer::Documentation do
 
       context 'when an attribute is nullable' do
         it 'makes type an array and adds null' do
-          expect(subject[:properties][:nullable_string][:type]).to be_kind_of(Array)
-          expect(subject[:properties][:nullable_string][:type]).to match_array([:string, :null])
+          expect(subject[:properties][:nullable_string][:type]).to be_a(Array)
+          expect(subject[:properties][:nullable_string][:type]).to contain_exactly(:string, :null)
         end
       end
     end
@@ -287,7 +287,7 @@ RSpec.describe LightweightSerializer::Documentation do
 
       context 'when an attribute does not have any documentation params' do
         it 'adds an empty hash' do
-          expect(subject[:properties][:attr_without_documentation]).to be_kind_of(Hash)
+          expect(subject[:properties][:attr_without_documentation]).to be_a(Hash)
           expect(subject[:properties][:attr_without_documentation]).to be_blank
         end
       end
@@ -316,7 +316,7 @@ RSpec.describe LightweightSerializer::Documentation do
     describe 'nested nullable' do
       it 'puts all documentation params into the documentation' do
         expect(subject[:properties][:nested_nullable][:description]).to eq('Some nested thing')
-        expect(subject[:properties][:nested_nullable][:nullable]).to eq(true)
+        expect(subject[:properties][:nested_nullable][:nullable]).to be(true)
       end
 
       it 'does not include `serializer` or any illegal attributes as documentation attributes' do
@@ -329,7 +329,7 @@ RSpec.describe LightweightSerializer::Documentation do
       end
 
       it 'generates a oneOf-array with reference and null' do
-        expect(subject[:properties][:nested_nullable][:oneOf]).to be_kind_of(Array)
+        expect(subject[:properties][:nested_nullable][:oneOf]).to be_a(Array)
         expect(subject[:properties][:nested_nullable][:oneOf][0][:$ref]).to eq('#/components/schemas/test--without_type')
         expect(subject[:properties][:nested_nullable][:oneOf][1][:type]).to eq(:null)
       end
@@ -358,13 +358,13 @@ RSpec.describe LightweightSerializer::Documentation do
 
         it 'correctly serializes an array with multiple items' do
           expect(subject[:properties][:users][:type]).to eq(:array)
-          expect(subject[:properties][:users][:items][:oneOf]).to be_kind_of(Array)
+          expect(subject[:properties][:users][:items][:oneOf]).to be_a(Array)
           expect(subject[:properties][:users][:items][:oneOf][0][:$ref]).to eq('#/components/schemas/test--for_user')
           expect(subject[:properties][:users][:items][:oneOf][1][:$ref]).to eq('#/components/schemas/test--for_admin')
         end
 
         it 'correctly serializes one attribute with mutliple serializers' do
-          expect(subject[:properties][:who_did_it][:oneOf]).to be_kind_of(Array)
+          expect(subject[:properties][:who_did_it][:oneOf]).to be_a(Array)
           expect(subject[:properties][:who_did_it][:oneOf][0][:$ref]).to eq('#/components/schemas/test--for_user')
           expect(subject[:properties][:who_did_it][:oneOf][1][:$ref]).to eq('#/components/schemas/test--for_admin')
           expect(subject[:properties][:who_did_it][:oneOf][2][:type]).to eq(:null)
@@ -389,8 +389,8 @@ RSpec.describe LightweightSerializer::Documentation do
         end
 
         it 'adds `nil` as a possible value' do
-          expect(subject[:properties][:nullable_with_enum][:nullable]).to eq(true)
-          expect(subject[:properties][:nullable_with_enum][:enum]).to match_array([:foo, :bar, :baz, nil])
+          expect(subject[:properties][:nullable_with_enum][:nullable]).to be(true)
+          expect(subject[:properties][:nullable_with_enum][:enum]).to contain_exactly(:foo, :bar, :baz, nil)
         end
       end
     end
