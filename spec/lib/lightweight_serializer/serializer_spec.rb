@@ -179,9 +179,9 @@ RSpec.describe LightweightSerializer::Serializer do
 
   describe 'attributes' do
     it 'defines the correct attributes on the serializers' do
-      expect(PersonSerializer.__lws_defined_attributes.keys).to match_array([:first_name, :middle_name, :last_name, :phone_number])
-      expect(AddressSerializer.__lws_defined_attributes.keys).to match_array([:address_type, :street, :number, :city])
-      expect(DrinkSerializer.__lws_defined_attributes.keys).to match_array([:brand, :name, :serving_size])
+      expect(PersonSerializer.__lws_defined_attributes.keys).to contain_exactly(:first_name, :middle_name, :last_name, :phone_number)
+      expect(AddressSerializer.__lws_defined_attributes.keys).to contain_exactly(:address_type, :street, :number, :city)
+      expect(DrinkSerializer.__lws_defined_attributes.keys).to contain_exactly(:brand, :name, :serving_size)
     end
 
     it 'defines the correct groupings' do
@@ -191,7 +191,7 @@ RSpec.describe LightweightSerializer::Serializer do
     end
 
     it 'defines the correct nested objects on the serializers' do
-      expect(PersonSerializer.__lws_defined_nested_serializers.keys).to match_array([:addresses, :errors, :favorite_drink])
+      expect(PersonSerializer.__lws_defined_nested_serializers.keys).to contain_exactly(:addresses, :errors, :favorite_drink)
 
       expect(AddressSerializer.__lws_defined_nested_serializers.keys).to be_blank
     end
@@ -202,14 +202,14 @@ RSpec.describe LightweightSerializer::Serializer do
       end
 
       it 'allows removing attributes defined on the parent class' do
-        expect(UnbrandedDrinkSerializer.__lws_defined_attributes.keys).to match_array([:name, :serving_size])
+        expect(UnbrandedDrinkSerializer.__lws_defined_attributes.keys).to contain_exactly(:name, :serving_size)
       end
     end
   end
 
   context 'allowed options' do
     it 'allows manually adding allowed options' do
-      expect(AddressSerializer.__lws_allowed_options).to match_array([:look_up_zip_for_city])
+      expect(AddressSerializer.__lws_allowed_options).to contain_exactly(:look_up_zip_for_city)
     end
 
     it 'allows all options that are allowed by serializers used for nested models' do
@@ -217,7 +217,7 @@ RSpec.describe LightweightSerializer::Serializer do
     end
 
     it 'does not duplicate attributes when they are added twice' do
-      expect(FooBarSerializer.__lws_allowed_options).to match_array([:user])
+      expect(FooBarSerializer.__lws_allowed_options).to contain_exactly(:user)
     end
   end
 
@@ -231,7 +231,7 @@ RSpec.describe LightweightSerializer::Serializer do
 
     context 'when no_root is set' do
       it 'does not create a root node' do
-        expect(error_serializer.as_json).to be_kind_of(Hash)
+        expect(error_serializer.as_json).to be_a(Hash)
         expect(error_serializer.as_json).not_to have_key(:data)
         expect(error_serializer.as_json.keys).to match_array(ErrorSerializer.__lws_defined_attributes.keys + [:type])
       end
@@ -258,12 +258,12 @@ RSpec.describe LightweightSerializer::Serializer do
 
     describe 'attributes' do
       it 'returns a hash with all defined attributes' do
-        expect(person_serializer.as_json[:data]).to be_kind_of(Hash)
+        expect(person_serializer.as_json[:data]).to be_a(Hash)
         expect(person_serializer.as_json[:data].keys).to eq(expected_person_attributes)
       end
 
       it 'correctly groups attributes' do
-        expect(person_serializer.as_json[:data][:detailed_name]).to be_kind_of(Hash)
+        expect(person_serializer.as_json[:data][:detailed_name]).to be_a(Hash)
         expect(person_serializer.as_json[:data][:detailed_name].keys).to eq(detailed_name_attributes)
       end
 
@@ -287,7 +287,7 @@ RSpec.describe LightweightSerializer::Serializer do
 
       context 'conditional attributes' do
         it 'automatically adds the conditional options to the __lws_allowed_options hash' do
-          expect(DrinkSerializer.__lws_allowed_options).to match_array([:show_serving_size])
+          expect(DrinkSerializer.__lws_allowed_options).to contain_exactly(:show_serving_size)
         end
 
         it 'does not serialize attributes with a condition when the condition is not passed as an option' do
@@ -317,7 +317,7 @@ RSpec.describe LightweightSerializer::Serializer do
       it 'renders the nested object with the given serializer' do
         serialized_drink = DrinkSerializer.new(drink_model, skip_root: true).as_json
 
-        expect(person_serializer.as_json[:data][:favorite_drink]).to be_kind_of(Hash)
+        expect(person_serializer.as_json[:data][:favorite_drink]).to be_a(Hash)
         expect(person_serializer.as_json[:data][:favorite_drink]).to eq(serialized_drink)
       end
 
@@ -353,15 +353,10 @@ RSpec.describe LightweightSerializer::Serializer do
       end
 
       it 'renders the nested collection with the given serializer' do
-        expect(person_serializer.as_json[:data][:addresses]).to be_kind_of(Array)
+        expect(person_serializer.as_json[:data][:addresses]).to be_a(Array)
         expect(person_serializer.as_json[:data][:addresses].count).to eq(2)
 
-        expect(person_serializer.as_json[:data][:addresses]).to match_array(
-          [
-            AddressSerializer.new(address_1_model, skip_root: true).as_json,
-            AddressSerializer.new(address_2_model, skip_root: true).as_json
-          ]
-        )
+        expect(person_serializer.as_json[:data][:addresses]).to contain_exactly(AddressSerializer.new(address_1_model, skip_root: true).as_json, AddressSerializer.new(address_2_model, skip_root: true).as_json)
       end
 
       it 'preserves the order of the elements' do
@@ -374,14 +369,14 @@ RSpec.describe LightweightSerializer::Serializer do
       it 'uses the block instead of accessing the attribute' do
         expect(person_model).not_to receive(:errors)
 
-        expect(person_serializer.as_json[:data][:errors]).to be_kind_of(Array)
+        expect(person_serializer.as_json[:data][:errors]).to be_a(Array)
         expect(person_serializer.as_json[:data][:errors].count).to eq(1)
       end
 
       it 'returns an empty array when the collection is empty' do
         person_model.addresses = []
 
-        expect(person_serializer.as_json[:data][:addresses]).to be_kind_of(Array)
+        expect(person_serializer.as_json[:data][:addresses]).to be_a(Array)
         expect(person_serializer.as_json[:data][:addresses]).to be_empty
       end
 
@@ -442,14 +437,14 @@ RSpec.describe LightweightSerializer::Serializer do
       context 'and a root element is requested' do
         it 'returns a hash with a data root and an array of elements' do
           expect(person_serializer.as_json).to have_key(:data)
-          expect(person_serializer.as_json[:data]).to be_kind_of(Array)
+          expect(person_serializer.as_json[:data]).to be_a(Array)
           expect(person_serializer.as_json[:data].count).to eq(people.count)
         end
       end
 
       context 'and no root element is requested' do
         it 'returns a hash with a data root and an array of elements' do
-          expect(error_serializer.as_json).to be_kind_of(Array)
+          expect(error_serializer.as_json).to be_a(Array)
           expect(error_serializer.as_json.count).to eq(errors.count)
         end
       end
@@ -468,7 +463,7 @@ RSpec.describe LightweightSerializer::Serializer do
 
       it 'returns an array of elements' do
         expect(drink_array_serializer.as_json).to have_key(:data)
-        expect(drink_array_serializer.as_json[:data]).to be_kind_of(Array)
+        expect(drink_array_serializer.as_json[:data]).to be_a(Array)
         expect(drink_array_serializer.as_json[:data].count).to eq(2)
       end
 
@@ -486,7 +481,7 @@ RSpec.describe LightweightSerializer::Serializer do
       let(:error_serializer) { ErrorSerializer.new(errors) }
 
       it 'returns a hash with a data root and an array of elements' do
-        expect(error_serializer.as_json).to be_kind_of(Array)
+        expect(error_serializer.as_json).to be_a(Array)
       end
     end
 
@@ -529,7 +524,7 @@ RSpec.describe LightweightSerializer::Serializer do
 
   describe '#to_json' do
     it 'returns a JSON string' do
-      expect(person_serializer.to_json).to be_kind_of(String)
+      expect(person_serializer.to_json).to be_a(String)
     end
   end
 
