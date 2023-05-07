@@ -386,19 +386,19 @@ RSpec.describe LightweightSerializer::Serializer do
       end
 
       context 'when we specified multiple serializers depending on the given model' do
-        let(:drink1) { UnbrandedDrink.new(name: 'Milk', serving_size: '1 glass') }
-        let(:drink2) { DrinkModel.new(brand: 'Pepsi', name: 'Max Cherry', serving_size: '1 bottle') }
-        let(:drink3) { HeatedDrinkModel.new(brand: 'Teekanne', name: 'Heiße Liebe', serving_size: '1 mug') }
-        let(:fridge) { FridgeModel.new(drinks: [drink1, drink2, drink3]) }
+        let(:milk_drink) { UnbrandedDrink.new(name: 'Milk', serving_size: '1 glass') }
+        let(:cola_drink) { DrinkModel.new(brand: 'Pepsi', name: 'Max Cherry', serving_size: '1 bottle') }
+        let(:tea_drink) { HeatedDrinkModel.new(brand: 'Teekanne', name: 'Heiße Liebe', serving_size: '1 mug') }
+        let(:fridge) { FridgeModel.new(drinks: [milk_drink, cola_drink, tea_drink]) }
 
         let(:fridge_serializer) { FridgeSerializer.new(fridge) }
 
         it 'uses a different serializer for each array item based on the type of array element' do
-          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(UnbrandedDrinkSerializer.new(drink1,
+          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(UnbrandedDrinkSerializer.new(milk_drink,
                                                                                                   skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks][1]).to eq(DrinkSerializer.new(drink2,
+          expect(fridge_serializer.as_json[:data][:drinks][1]).to eq(DrinkSerializer.new(cola_drink,
                                                                                          skip_root: true).as_json)
-          expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(drink3,
+          expect(fridge_serializer.as_json[:data][:drinks][2]).to eq(HeatedDrinkSerializer.new(tea_drink,
                                                                                                skip_root: true).as_json)
         end
       end
@@ -418,11 +418,11 @@ RSpec.describe LightweightSerializer::Serializer do
 
       context 'with a defined fallback' do
         let(:fridge_serializer) { FridgeWithFallbackSerializer.new(fridge) }
-        let(:drink1) { 'DrinkString' }
-        let(:fridge) { FridgeModel.new(drinks: [drink1]) }
+        let(:milk_drink) { 'DrinkString' }
+        let(:fridge) { FridgeModel.new(drinks: [milk_drink]) }
 
         it 'uses the fallback serializer' do
-          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(GenericSerializer.new(drink1, skip_root: true).as_json)
+          expect(fridge_serializer.as_json[:data][:drinks][0]).to eq(GenericSerializer.new(milk_drink, skip_root: true).as_json)
         end
       end
     end
