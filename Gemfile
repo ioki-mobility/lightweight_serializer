@@ -8,5 +8,5 @@ gemspec
 gem 'phony'
 gem 'rake', '~> 13.0'
 gem 'rspec', '~> 3.12'
-gem 'rubocop', '~> 1.51'
+gem 'rubocop', '~> 1.52'
 gem 'rubocop-rspec'
