@@ -18,7 +18,7 @@ module LightweightSerializer
     end
 
     def self.identifier_for(serializer)
-      serializer.name.gsub(/Serializer/, '').underscore.gsub('/', '--')
+      serializer.name.gsub('Serializer', '').underscore.gsub('/', '--')
     end
 
     def identifier

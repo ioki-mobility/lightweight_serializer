@@ -161,7 +161,7 @@ RSpec.describe LightweightSerializer::Documentation do
       end
 
       it 'generates a title' do
-        expect(subject[:title]).to eq(serializer.name.gsub(/Serializer/, ''))
+        expect(subject[:title]).to eq(serializer.name.gsub('Serializer', ''))
       end
 
       it 'generates an entry in the properties hash for each defined attribute' do
