@@ -54,7 +54,7 @@ GEM
     parser (3.2.2.3)
       ast (~> 2.4.1)
       racc
-    phony (2.20.7)
+    phony (2.20.8)
     racc (1.7.1)
     rack (2.2.6.4)
     rack-test (2.1.0)
