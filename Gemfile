@@ -6,7 +6,7 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'phony'
-gem 'rake', '~> 13.1'
+gem 'rake', '~> 13.2'
 gem 'rspec', '~> 3.13'
 gem 'rubocop', '~> 1.53'
 gem 'rubocop-rspec'
