@@ -379,6 +379,40 @@ RSpec.describe LightweightSerializer::Documentation do
     end
 
     describe 'special behaviors' do
+      describe 'when emit_required and omit_deprecated_nullable is true' do
+        subject do
+          described_class.new(serializer).openapi_schema(
+            emit_required:             true,
+            omit_deprecated_nullable: true
+          )
+        end
+
+        it 'adds a required list for all unconditional top-level properties' do
+          expect(subject[:required]).to contain_exactly(
+            :type,
+            :attr,
+            :other_attr,
+            :nullable_string,
+            :date,
+            :attr_without_documentation,
+            :users,
+            :nested_nullable,
+            :nested_not_nullable,
+            :nested_with_overriden_ref
+          )
+        end
+
+        it 'omits deprecated nullable for plain attributes but keeps null in the type array' do
+          expect(subject[:properties][:nullable_string].keys).not_to include(:nullable)
+          expect(subject[:properties][:nullable_string][:type]).to contain_exactly(:string, :null)
+        end
+
+        it 'omits deprecated nullable for nested attributes but keeps nullability in oneOf' do
+          expect(subject[:properties][:nested_nullable].keys).not_to include(:nullable)
+          expect(subject[:properties][:nested_nullable][:oneOf][1][:type]).to eq(:null)
+        end
+      end
+
       describe 'when a nullable field uses an enum' do
         let(:serializer) do
           Class.new(LightweightSerializer::Serializer) do
