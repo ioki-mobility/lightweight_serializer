@@ -29,7 +29,15 @@ module LightweightSerializer
       @display_title ||= serializer.name&.gsub(/Serializer/, '')
     end
 
-    def openapi_schema
+    # @param emit_required [Boolean] when true, add a `required` array listing every
+    #   non-`condition:`-gated property (OpenAPI-correct presence). Default false to
+    #   preserve historical output for existing consumers.
+    # @param omit_deprecated_nullable [Boolean] when true, drop the deprecated OpenAPI
+    #   3.0 `nullable: true` keyword (nullability is already encoded in the `type`
+    #   array / `oneOf` for 3.1). Default false to preserve historical output.
+    def openapi_schema(emit_required: false, omit_deprecated_nullable: false)
+      @omit_deprecated_nullable = omit_deprecated_nullable
+
       result = {
         type:       'object',
         properties: base_properties_hash,
@@ -46,6 +54,8 @@ module LightweightSerializer
           result[:properties][attr_name] = documentation
         end
       end
+
+      apply_required!(result) if emit_required
 
       result
     end
@@ -134,6 +144,10 @@ module LightweightSerializer
           end
         end
 
+        # Nullability is encoded above via `oneOf [..., { type: :null}]`; optionally
+        # drop the redundant deprecated `nullable: true` so it is not double-counted.
+        documentation.delete(:nullable) if @omit_deprecated_nullable
+
         [attr_name, config.group, documentation]
       end
     end
@@ -143,13 +157,41 @@ module LightweightSerializer
       removed_attributes -= [:type] if remove_type
 
       hash.deep_dup.slice(*removed_attributes).tap do |result|
-        if result[:nullable] && !remove_type
+        nullable = result[:nullable]
+
+        if nullable && !remove_type
           result[:type] = Array.wrap(result[:type])
           result[:type] << :null
         end
 
-        result[:enum] << nil if result[:nullable] && result[:enum].is_a?(Array)
+        result[:enum] << nil if nullable && result[:enum].is_a?(Array)
+
+        # Nullability is now encoded in the `type` array (OpenAPI 3.1). Keeping the
+        # deprecated 3.0 `nullable: true` as well makes openapi-typescript emit a
+        # second `| null`, producing `(x | null) | null`. Optionally drop it here for
+        # plain attributes; nested refs are handled in `nested_definitions`.
+        result.delete(:nullable) if @omit_deprecated_nullable && !remove_type
       end
+    end
+
+    def apply_required!(result)
+      required = base_properties_hash.keys.dup
+
+      (serializer.__lws_defined_attributes.values +
+        serializer.__lws_defined_nested_serializers.values).each do |config|
+        next if config.condition.present?
+
+        if config.group
+          group_schema = result[:properties][config.group]
+          group_schema[:required] = ((group_schema[:required] || []) + [config.attr_name]).uniq
+          required << config.group
+        else
+          required << config.attr_name
+        end
+      end
+
+      required.uniq!
+      result[:required] = required if required.any?
     end
   end
 end
